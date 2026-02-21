@@ -3,9 +3,11 @@ package com.immunization.validator.service;
 import com.immunization.validator.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -16,15 +18,23 @@ import java.util.Comparator;
 /**
  * Service for validating patient immunization records against state requirements.
  *
- * This version includes:
- * - Date-based condition validation (1st, 4th, 10th, 16th, 18th birthdays)
+ * Version 3.0 includes:
+ * - Tri-state validation: VALID, INVALID, UNDETERMINED
+ * - Date-based condition validation (1st, 4th, 10th, 16th birthdays and months)
  * - Interval-based condition validation (28 days, 6 months, 8 weeks)
- * - Alternate requirements support
+ * - Alternate requirements support with FLEXIBLE or STRICT modes
  * - Medical exemptions support
+ * - Detailed error reporting and metadata
+ *
+ * Alternate Requirement Behavior:
+ * - FLEXIBLE mode (default): If alternate fails, check primary requirement
+ *   Example: 4 DTaP doses with 4th dose too early → Check if has 5 doses
+ * - STRICT mode: If alternate fails, mark as INVALID without checking primary
+ *   Example: 4 DTaP doses with 4th dose too early → INVALID immediately
  *
  * @author Saakad
  * @since 2026-01-12
- * @version 2.0 - Added interval condition validation
+ * @version 3.0 - Added tri-state ComplianceStatus with enhanced alternate logic
  */
 @Slf4j
 @Service
@@ -32,10 +42,19 @@ import java.util.Comparator;
 public class ValidationService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final String VALIDATOR_VERSION = "3.0.0";
 
     private final RequirementsService requirementsService;
     private final DateConditionEvaluator dateConditionEvaluator;
-    private final IntervalConditionEvaluator intervalConditionEvaluator;  // ⬅️ NEW
+    private final IntervalConditionEvaluator intervalConditionEvaluator;
+
+    /**
+     * Alternate requirement behavior mode.
+     * FLEXIBLE: Check primary if alternate fails (default, more forgiving)
+     * STRICT: Mark invalid if alternate fails (don't check primary)
+     */
+    @Value("${immunization.validation.alternate-behavior:FLEXIBLE}")
+    private String alternateBehaviorMode;
 
     /**
      * Validate a patient's immunization record against state requirements.
@@ -43,16 +62,16 @@ public class ValidationService {
      * @param patient Patient with immunization records
      * @param stateCode State code (e.g., "CA", "MA")
      * @param age Patient's age in years (optional if birthDate provided)
-     * @param schoolYear School year (e.g., "K", "1st") - optional, alternative to age
-     * @param includeDetails Whether to include unmet requirements in response
-     * @return ValidationResponse with validation result
+     * @param schoolYear School year (e.g., "preschool", "K-6") - optional, alternative to age
+     * @param includeDetails Whether to include unmet requirements and undetermined conditions in response
+     * @return ValidationResponse with tri-state ComplianceStatus
      */
-
     public ValidationResponse validate(Patient patient, String stateCode, Integer age,
                                        String schoolYear, boolean includeDetails) {
 
         String maskedId = maskPatientId(patient.getId());
-        log.info("Validating patient {} against {} requirements", maskedId, stateCode);
+        log.info("Validating patient {} against {} requirements (mode: {})",
+                maskedId, stateCode, alternateBehaviorMode);
 
         // Calculate age from birthDate if not provided
         Integer effectiveAge = age;
@@ -71,25 +90,56 @@ public class ValidationService {
         if (requirements == null || requirements.isEmpty()) {
             log.warn("No requirements found for state: {}, age: {}, schoolYear: {}",
                     stateCode, effectiveAge, schoolYear);
+
             return ValidationResponse.builder()
                     .patientId(patient.getId())
-                    .valid(false)
-                    .unmetRequirements(includeDetails ? List.of() : null)
+                    .status(ComplianceStatus.UNDETERMINED)
+                    .message("No validation requirements found for the specified criteria")
+                    .undeterminedConditions(List.of(
+                            UndeterminedCondition.builder()
+                                    .reason("No requirements found")
+                                    .details(String.format("State: %s, SchoolYear: %s, Age: %s",
+                                            stateCode, schoolYear, effectiveAge))
+                                    .suggestion("Verify state code and school year are correct")
+                                    .build()
+                    ))
                     .build();
         }
 
         // Validate requirements
-        List<UnmetRequirement> unmetRequirements = validateRequirements(patient, requirements);
+        InternalValidationResult validationResult = validateRequirements(patient, requirements);
 
-        boolean isValid = unmetRequirements.isEmpty();
+        // Build response based on result
+        ValidationResponse response = buildResponse(
+                patient.getId(),
+                validationResult,
+                stateCode,
+                schoolYear,
+                requirements.size(),
+                includeDetails
+        );
 
-        log.info("Validation complete for patient {}: {}", maskedId, isValid ? "VALID" : "INVALID");
+        log.info("Validation complete for patient {}: {}", maskedId, response.getStatus());
 
-        return ValidationResponse.builder()
-                .patientId(patient.getId())
-                .valid(isValid)
-                .unmetRequirements(includeDetails ? unmetRequirements : null)
-                .build();
+        return response;
+    }
+
+    /**
+     * Internal result object for validation tracking.
+     * Tracks satisfied, unsatisfied, and undetermined requirements.
+     */
+    private static class InternalValidationResult {
+        List<UnmetRequirement> unmetRequirements = new ArrayList<>();
+        List<UndeterminedCondition> undeterminedConditions = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        int satisfiedCount = 0;
+        int unsatisfiedCount = 0;
+        int undeterminedCount = 0;
+
+        // Enhanced tracking for alternate requirements
+        int alternateAttemptedCount = 0;
+        int alternateSatisfiedCount = 0;
+        int primaryFallbackCount = 0;
     }
 
     /**
@@ -104,14 +154,13 @@ public class ValidationService {
      *
      * @param patient Patient with immunization records
      * @param requirements List of validation requirements
-     * @return List of unmet requirements (empty if all satisfied)
+     * @return InternalValidationResult with tri-state tracking
      */
-    private List<UnmetRequirement> validateRequirements(Patient patient,
-                                                        List<ValidationRequirement> requirements) {
-        List<UnmetRequirement> unmetRequirements = new ArrayList<>();
+    private InternalValidationResult validateRequirements(Patient patient,
+                                                          List<ValidationRequirement> requirements) {
+        InternalValidationResult result = new InternalValidationResult();
 
         // Initialize empty list instead of early return
-        // This ensures exception checking still happens even with no immunizations
         List<Immunization> patientImmunizations = patient.getImmunizations();
         if (patientImmunizations == null) {
             patientImmunizations = List.of();
@@ -145,20 +194,30 @@ public class ValidationService {
             } catch (DateTimeParseException e) {
                 log.warn("Invalid birth date format for patient {}: {}",
                         patient.getId(), patient.getBirthDate());
+                result.warnings.add("Invalid birth date format - date-based conditions cannot be evaluated");
             }
         }
+
+        // Check if we're in strict mode
+        boolean isStrictMode = "STRICT".equalsIgnoreCase(alternateBehaviorMode);
 
         // Check each requirement
         for (ValidationRequirement requirement : requirements) {
             String vaccineCode = requirement.getVaccineCode();
 
-            // Check exceptions FIRST, before checking doses
-            // This allows exemptions to work even for patients with no immunizations
-            if (requirement.getAcceptedExceptions() != null && !requirement.getAcceptedExceptions().isEmpty()) {
+            // ========================================
+            // STEP 1: Check exceptions FIRST
+            // ========================================
+            if (requirement.getAcceptedExceptions() != null &&
+                    !requirement.getAcceptedExceptions().isEmpty()) {
+
                 String exceptionType = exceptionsByVaccine.get(vaccineCode);
-                if (exceptionType != null && requirement.getAcceptedExceptions().contains(exceptionType)) {
-                    log.debug("Requirement satisfied by exception {} for vaccine {}",
+                if (exceptionType != null &&
+                        requirement.getAcceptedExceptions().contains(exceptionType)) {
+
+                    log.debug("✅ Requirement satisfied by exception {} for vaccine {}",
                             exceptionType, vaccineCode);
+                    result.satisfiedCount++;
                     continue; // Requirement satisfied by exception
                 }
             }
@@ -166,9 +225,16 @@ public class ValidationService {
             Long foundDoses = vaccineCounts.getOrDefault(vaccineCode, 0L);
             Integer requiredDoses = requirement.getMinDoses() != null ? requirement.getMinDoses() : 1;
 
-            // Check alternate requirements WITH date and interval condition validation
+            // ========================================
+            // STEP 2: Check alternate requirements
+            // ========================================
             boolean alternateRequirementMet = false;
-            if (requirement.getAlternateRequirements() != null) {
+            boolean attemptedAlternate = false; // Track if alternate was attempted
+            ValidationResult alternateResult = null;
+
+            if (requirement.getAlternateRequirements() != null &&
+                    !requirement.getAlternateRequirements().isEmpty()) {
+
                 for (AlternateRequirement altReq : requirement.getAlternateRequirements()) {
                     String altVaccineCode = altReq.getAlternateVaccineCode() != null ?
                             altReq.getAlternateVaccineCode() : vaccineCode;
@@ -177,6 +243,8 @@ public class ValidationService {
 
                     // Check dose count first
                     if (altFoundDoses >= altRequiredDoses) {
+                        attemptedAlternate = true; // Patient has minimum doses for alternate
+                        result.alternateAttemptedCount++;
 
                         // Get immunizations for this vaccine, sorted chronologically
                         List<Immunization> vaccineImmunizations = immunizationsByVaccine
@@ -186,57 +254,77 @@ public class ValidationService {
                                 .collect(Collectors.toList());
 
                         // Evaluate date-based condition if present
-                        boolean dateConditionMet = true;
+                        ValidationResult dateConditionResult = ValidationResult.SATISFIED;
+
                         if (altReq.getDateConditions() != null && !altReq.getDateConditions().isEmpty()) {
                             if (birthDate != null) {
-                                dateConditionMet = dateConditionEvaluator.evaluateConditions(
+                                dateConditionResult = dateConditionEvaluator.evaluateConditions(
                                         altReq.getDateConditions(),
                                         vaccineImmunizations,
                                         birthDate
                                 );
-                                if (!dateConditionMet) {
-                                    log.debug("Alternate requirement date condition NOT satisfied: '{}'",
-                                            altReq.getCondition());
+                                if (dateConditionResult != ValidationResult.SATISFIED) {
+                                    log.debug("📋 Alternate date condition NOT satisfied for {}: '{}'",
+                                            vaccineCode, altReq.getCondition());
                                 }
                             } else {
-                                log.warn("Cannot evaluate date condition '{}' - missing or invalid birth date",
-                                        altReq.getCondition());
-                                dateConditionMet = false;
+                                dateConditionResult = ValidationResult.UNDETERMINED;
+                                result.warnings.add(String.format(
+                                        "Cannot evaluate date conditions for %s alternate - missing birth date", vaccineCode));
                             }
                         }
 
-                        // ⬇️ NEW: Evaluate interval-based conditions if present
-                        boolean intervalConditionMet = true;
+                        // Evaluate interval-based conditions if present
+                        ValidationResult intervalConditionResult = ValidationResult.SATISFIED;
+
                         if (altReq.getIntervalConditions() != null && !altReq.getIntervalConditions().isEmpty()) {
-                            intervalConditionMet = intervalConditionEvaluator.evaluateConditions(
+                            intervalConditionResult = intervalConditionEvaluator.evaluateConditions(
                                     altReq.getIntervalConditions(),
                                     vaccineImmunizations
                             );
-                            if (!intervalConditionMet) {
-                                log.debug("Alternate requirement interval condition NOT satisfied");
+                            if (intervalConditionResult != ValidationResult.SATISFIED) {
+                                log.debug("📋 Alternate interval condition NOT satisfied for {}", vaccineCode);
                             }
                         }
 
                         // Both date and interval conditions must be met
-                        if (dateConditionMet && intervalConditionMet) {
-                            log.debug("Alternate requirement satisfied: {} doses of {} with all conditions met",
-                                    altFoundDoses, altVaccineCode);
+                        alternateResult = ValidationResult.and(dateConditionResult, intervalConditionResult);
+
+                        if (alternateResult == ValidationResult.SATISFIED) {
+                            log.info("✅ {} satisfied via ALTERNATE requirement: {} doses with all conditions met",
+                                    vaccineCode, altFoundDoses);
                             alternateRequirementMet = true;
+                            result.alternateSatisfiedCount++;
                             break;
+                        } else if (alternateResult == ValidationResult.UNDETERMINED) {
+                            log.debug("⚠️ Alternate requirement UNDETERMINED for {}", vaccineCode);
+                            // Continue checking other alternates
+                        } else {
+                            log.debug("❌ Alternate attempted but NOT satisfied for {}", vaccineCode);
+                            // Continue checking other alternates
                         }
                     }
                 }
             }
-            boolean hasAlternate = requirement.getAlternateRequirements() != null
-                    && !requirement.getAlternateRequirements().isEmpty();
+
+            // Check if alternate was satisfied
             if (alternateRequirementMet) {
-                continue; //  valid via alternate
+                result.satisfiedCount++;
+                continue; // Valid via alternate, skip primary
             }
 
-            // ⬇️ FALL BACK TO PRIMARY if alternate exists but failed
-            if (hasAlternate && !alternateRequirementMet) {
-                unmetRequirements.add(UnmetRequirement.builder()
-                        .description(requirement.getDescription())
+            // ========================================
+            // STEP 2.5: Handle STRICT mode
+            // ========================================
+            if (isStrictMode && attemptedAlternate && !alternateRequirementMet) {
+                // STRICT MODE: If alternate was attempted but failed, mark as INVALID
+                // Don't check primary requirement
+                log.warn("⚠️ STRICT MODE: {} attempted alternate but failed - marking INVALID without checking primary",
+                        vaccineCode);
+                result.unsatisfiedCount++;
+                result.unmetRequirements.add(UnmetRequirement.builder()
+                        .description(String.format("Alternate requirement not satisfied (STRICT mode): %s",
+                                requirement.getDescription()))
                         .vaccineCode(vaccineCode)
                         .requiredDoses(requiredDoses)
                         .foundDoses(foundDoses.intValue())
@@ -244,7 +332,16 @@ public class ValidationService {
                 continue;
             }
 
-            // ⬇️ NEW: Check primary requirement with date and interval conditions
+            // ========================================
+            // STEP 3: Check primary requirement (FLEXIBLE mode or no alternate attempted)
+            // ========================================
+
+            if (attemptedAlternate && !alternateRequirementMet) {
+                log.info("📋 {} - Alternate attempted but not satisfied, checking PRIMARY requirement (FLEXIBLE mode)",
+                        vaccineCode);
+                result.primaryFallbackCount++;
+            }
+
             // Get immunizations for this vaccine, sorted chronologically
             List<Immunization> vaccineImmunizations = immunizationsByVaccine
                     .getOrDefault(vaccineCode, new ArrayList<>())
@@ -254,57 +351,83 @@ public class ValidationService {
 
             // Check dose count
             if (foundDoses >= requiredDoses) {
-                boolean requirementMet = true;
-                String failureReason = null;
+                // Have enough doses, now check conditions
 
                 // Evaluate date conditions if present
+                ValidationResult dateResult = ValidationResult.SATISFIED;
+
                 if (requirement.getDateConditions() != null && !requirement.getDateConditions().isEmpty()) {
                     if (birthDate != null) {
-                        boolean dateConditionsMet = dateConditionEvaluator.evaluateConditions(
+                        dateResult = dateConditionEvaluator.evaluateConditions(
                                 requirement.getDateConditions(),
                                 vaccineImmunizations,
                                 birthDate
                         );
-                        if (!dateConditionsMet) {
-                            requirementMet = false;
-                            failureReason = "Date condition not met";
+                        if (dateResult != ValidationResult.SATISFIED) {
                             log.debug("Date conditions not met for vaccine {}", vaccineCode);
                         }
                     } else {
-                        requirementMet = false;
-                        failureReason = "Cannot evaluate date conditions - missing birth date";
-                        log.warn("Cannot evaluate date conditions for {} - missing or invalid birth date",
-                                vaccineCode);
+                        dateResult = ValidationResult.UNDETERMINED;
+                        result.warnings.add(String.format(
+                                "Cannot evaluate date conditions for %s - missing birth date", vaccineCode));
                     }
                 }
 
-                // ⬇️ NEW: Evaluate interval conditions if present
-                if (requirementMet && requirement.getIntervalConditions() != null &&
+                // Evaluate interval conditions if present
+                ValidationResult intervalResult = ValidationResult.SATISFIED;
+
+                if (requirement.getIntervalConditions() != null &&
                         !requirement.getIntervalConditions().isEmpty()) {
-                    boolean intervalConditionsMet = intervalConditionEvaluator.evaluateConditions(
+                    intervalResult = intervalConditionEvaluator.evaluateConditions(
                             requirement.getIntervalConditions(),
                             vaccineImmunizations
                     );
-                    if (!intervalConditionsMet) {
-                        requirementMet = false;
-                        failureReason = "Interval condition not met";
+                    if (intervalResult != ValidationResult.SATISFIED) {
                         log.debug("Interval conditions not met for vaccine {}", vaccineCode);
                     }
                 }
 
-                // If requirement is met with all conditions, continue to next requirement
-                if (requirementMet) {
-                    log.debug("Requirement fully satisfied for vaccine {}: {} doses with all conditions met",
-                            vaccineCode, foundDoses);
-                    continue;
-                }
+                // Combine results using AND logic
+                ValidationResult primaryResult = ValidationResult.and(dateResult, intervalResult);
 
-                // If we have enough doses but conditions not met, add specific unmet requirement
-                if (failureReason != null) {
-                    unmetRequirements.add(UnmetRequirement.builder()
-                            .description(String.format("%s: %d doses found, but %s. %s",
-                                    vaccineCode, foundDoses.intValue(), failureReason,
-                                    requirement.getDescription() != null ? requirement.getDescription() : ""))
+                if (primaryResult == ValidationResult.SATISFIED) {
+                    if (attemptedAlternate) {
+                        log.info("✅ {} satisfied via PRIMARY requirement (alternate was attempted but failed): {} doses",
+                                vaccineCode, foundDoses);
+                    } else {
+                        log.info("✅ {} satisfied via PRIMARY requirement: {} doses with all conditions met",
+                                vaccineCode, foundDoses);
+                    }
+                    result.satisfiedCount++;
+                    continue;
+                } else if (primaryResult == ValidationResult.UNDETERMINED) {
+                    // Cannot evaluate - add to undetermined
+                    result.undeterminedCount++;
+                    result.undeterminedConditions.add(UndeterminedCondition.builder()
+                            .vaccineCode(vaccineCode)
+                            .condition(requirement.getDescription())
+                            .reason("Cannot evaluate date or interval conditions")
+                            .details(String.format("Missing or invalid data for %s validation", vaccineCode))
+                            .suggestion("Verify birth date is provided and conditions are correctly formatted")
+                            .build());
+                    continue;
+                } else {
+                    // NOT_SATISFIED - have doses but conditions not met
+                    result.unsatisfiedCount++;
+
+                    String description;
+                    if (attemptedAlternate) {
+                        description = String.format("%s: %d doses found, but neither alternate nor primary requirements satisfied. %s",
+                                vaccineCode, foundDoses.intValue(),
+                                requirement.getDescription() != null ? requirement.getDescription() : "");
+                    } else {
+                        description = String.format("%s: %d doses found, but date/interval conditions not met. %s",
+                                vaccineCode, foundDoses.intValue(),
+                                requirement.getDescription() != null ? requirement.getDescription() : "");
+                    }
+
+                    result.unmetRequirements.add(UnmetRequirement.builder()
+                            .description(description)
                             .vaccineCode(vaccineCode)
                             .requiredDoses(requiredDoses)
                             .foundDoses(foundDoses.intValue())
@@ -314,20 +437,106 @@ public class ValidationService {
             }
 
             // Not enough doses
-            if (foundDoses < requiredDoses) {
-                unmetRequirements.add(UnmetRequirement.builder()
-                        .description(requirement.getDescription() != null ?
-                                requirement.getDescription() :
-                                String.format("Insufficient doses of %s: required %d, found %d",
-                                        vaccineCode, requiredDoses, foundDoses))
-                        .vaccineCode(vaccineCode)
-                        .requiredDoses(requiredDoses)
-                        .foundDoses(foundDoses.intValue())
+            result.unsatisfiedCount++;
+            result.unmetRequirements.add(UnmetRequirement.builder()
+                    .description(requirement.getDescription() != null ?
+                            requirement.getDescription() :
+                            String.format("Insufficient doses of %s: required %d, found %d",
+                                    vaccineCode, requiredDoses, foundDoses))
+                    .vaccineCode(vaccineCode)
+                    .requiredDoses(requiredDoses)
+                    .foundDoses(foundDoses.intValue())
+                    .build());
+        }
+
+        // Log summary of alternate usage
+        if (result.alternateAttemptedCount > 0) {
+            log.info("📊 Alternate Requirements Summary: Attempted={}, Satisfied={}, Fell back to Primary={}",
+                    result.alternateAttemptedCount, result.alternateSatisfiedCount, result.primaryFallbackCount);
+        }
+
+        return result;
+    }
+
+    /**
+     * Build the final ValidationResponse with tri-state status.
+     *
+     * Determines overall status based on:
+     * - UNDETERMINED: If any requirement cannot be evaluated
+     * - INVALID: If all requirements can be evaluated but some are not satisfied
+     * - VALID: If all requirements are satisfied
+     *
+     * @param patientId Patient identifier
+     * @param result Internal validation result with counts
+     * @param state State code
+     * @param schoolYear School year
+     * @param totalRequirements Total number of requirements checked
+     * @param includeDetails Whether to include detailed lists in response
+     * @return Complete ValidationResponse
+     */
+    private ValidationResponse buildResponse(String patientId,
+                                             InternalValidationResult result,
+                                             String state,
+                                             String schoolYear,
+                                             int totalRequirements,
+                                             boolean includeDetails) {
+
+        // Determine overall status
+        ComplianceStatus status;
+        String message;
+
+        if (result.undeterminedCount > 0) {
+            // If ANY requirement is undetermined, overall status is UNDETERMINED
+            status = ComplianceStatus.UNDETERMINED;
+            message = String.format("Cannot determine compliance: %d requirement(s) could not be evaluated",
+                    result.undeterminedCount);
+        } else if (result.unsatisfiedCount > 0) {
+            // All requirements determined, but some not satisfied
+            status = ComplianceStatus.INVALID;
+            message = String.format("Patient does not meet requirements: %d requirement(s) not satisfied",
+                    result.unsatisfiedCount);
+        } else {
+            // All requirements satisfied
+            status = ComplianceStatus.VALID;
+            message = "Patient meets all immunization requirements";
+        }
+
+        ValidationResponse.ValidationResponseBuilder responseBuilder = ValidationResponse.builder()
+                .patientId(patientId)
+                .status(status)
+                .message(message)
+                .metadata(ValidationMetadata.builder()
+                        .validatedAt(LocalDateTime.now())
+                        .state(state)
+                        .schoolYear(schoolYear)
+                        .totalRequirements(totalRequirements)
+                        .satisfiedRequirements(result.satisfiedCount)
+                        .unsatisfiedRequirements(result.unsatisfiedCount)
+                        .undeterminedRequirements(result.undeterminedCount)
+                        .validatorVersion(VALIDATOR_VERSION)
                         .build());
+
+        // Add detailed lists only if requested
+        if (includeDetails) {
+            if (!result.unmetRequirements.isEmpty()) {
+                responseBuilder.unmetRequirements(result.unmetRequirements);
+            }
+            if (!result.undeterminedConditions.isEmpty()) {
+                responseBuilder.undeterminedConditions(result.undeterminedConditions);
             }
         }
 
-        return unmetRequirements;
+        // Add warnings if any
+        if (!result.warnings.isEmpty()) {
+            responseBuilder.warnings(result.warnings);
+        }
+
+        ValidationResponse response = responseBuilder.build();
+
+        // Set backward compatibility field
+        response.setStatusWithBackwardCompatibility(status);
+
+        return response;
     }
 
     /**
