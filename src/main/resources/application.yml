@@ -428,3 +428,14 @@ immunization:
               - "MEDICAL_CONTRAINDICATION"
               - "RELIGIOUS_EXEMPTION"
               - "SIGNED_WAIVER"
+server:
+  port: 8080
+
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info
+    endpoint:
+      health:
+        show-details: always
