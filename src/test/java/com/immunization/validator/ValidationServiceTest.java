@@ -5,6 +5,7 @@ import com.immunization.validator.service.DateConditionEvaluator;
 import com.immunization.validator.service.IntervalConditionEvaluator;
 import com.immunization.validator.service.RequirementsService;
 import com.immunization.validator.service.ValidationService;
+import com.immunization.validator.service.VaccineLookupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -22,11 +23,15 @@ import static org.mockito.Mockito.*;
  *
  * @author Saakad
  * @since 2026-01-01
+ * @version 2.0 - Added VaccineLookupService support for CVX code testing
  */
 class ValidationServiceTest {
 
     @Mock
     private RequirementsService requirementsService;
+
+    @Mock
+    private VaccineLookupService vaccineLookupService;
 
     private ValidationService validationService;
     private DateConditionEvaluator dateConditionEvaluator;
@@ -40,8 +45,12 @@ class ValidationServiceTest {
         dateConditionEvaluator = new DateConditionEvaluator();
         intervalConditionEvaluator = new IntervalConditionEvaluator();
 
-        // Pass all dependencies to ValidationService
-        validationService = new ValidationService(requirementsService, dateConditionEvaluator, intervalConditionEvaluator);
+        // Pass all dependencies to ValidationService (including VaccineLookupService)
+        validationService = new ValidationService(
+                requirementsService,
+                dateConditionEvaluator,
+                intervalConditionEvaluator,
+                vaccineLookupService);
     }
 
     // ========================================

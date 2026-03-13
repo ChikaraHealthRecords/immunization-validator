@@ -6,6 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -218,18 +223,15 @@ public class IntervalConditionEvaluator {
             return ValidationResult.NOT_SATISFIED;
         }
 
-        LocalDate fromDate;
-        LocalDate toDate;
-        try {
-            fromDate = LocalDate.parse(immunizations.get(fromIdx).getOccurrenceDateTime());
-            toDate   = LocalDate.parse(immunizations.get(toIdx).getOccurrenceDateTime());
-        } catch (Exception e) {
-            log.warn("Cannot parse dates for dose #{} or #{} — condition: '{}'",
-                    fromDose, toDose, condition);
+        LocalDate fromDate = parseOccurrenceAsLocalDate(immunizations.get(fromIdx).getOccurrenceDateTime());
+        LocalDate toDate   = parseOccurrenceAsLocalDate(immunizations.get(toIdx).getOccurrenceDateTime());
+
+        if (fromDate == null || toDate == null) {
+            log.warn("Cannot parse dates for dose #{} or #{} — condition: '{}'", fromDose, toDose, condition);
             return ValidationResult.UNDETERMINED;
         }
 
-        long actual   = calculateInterval(fromDate, toDate, unit);
+        long actual = calculateInterval(fromDate, toDate, unit);
         if (actual < 0) {
             return ValidationResult.UNDETERMINED;
         }
@@ -254,12 +256,10 @@ public class IntervalConditionEvaluator {
         Immunization prev = immunizations.get(size - 2);
         Immunization last = immunizations.get(size - 1);
 
-        LocalDate prevDate;
-        LocalDate lastDate;
-        try {
-            prevDate = LocalDate.parse(prev.getOccurrenceDateTime());
-            lastDate = LocalDate.parse(last.getOccurrenceDateTime());
-        } catch (Exception e) {
+        LocalDate prevDate = parseOccurrenceAsLocalDate(prev.getOccurrenceDateTime());
+        LocalDate lastDate = parseOccurrenceAsLocalDate(last.getOccurrenceDateTime());
+
+        if (prevDate == null || lastDate == null) {
             log.warn("Cannot parse dose dates for last two doses: prev='{}', curr='{}'",
                     prev.getOccurrenceDateTime(), last.getOccurrenceDateTime());
             return ValidationResult.UNDETERMINED;
@@ -286,14 +286,13 @@ public class IntervalConditionEvaluator {
     private ValidationResult checkAllConsecutivePairs(int amount, String unit,
                                                       List<Immunization> immunizations) {
         for (int i = 1; i < immunizations.size(); i++) {
-            LocalDate prev;
-            LocalDate curr;
-            try {
-                prev = LocalDate.parse(immunizations.get(i - 1).getOccurrenceDateTime());
-                curr = LocalDate.parse(immunizations.get(i).getOccurrenceDateTime());
-            } catch (Exception e) {
+            LocalDate prev = parseOccurrenceAsLocalDate(immunizations.get(i - 1).getOccurrenceDateTime());
+            LocalDate curr = parseOccurrenceAsLocalDate(immunizations.get(i).getOccurrenceDateTime());
+
+            if (prev == null || curr == null) {
                 log.warn("Cannot parse dose dates at index {}: prev='{}', curr='{}'",
-                        i, immunizations.get(i - 1).getOccurrenceDateTime(),
+                        i,
+                        immunizations.get(i - 1).getOccurrenceDateTime(),
                         immunizations.get(i).getOccurrenceDateTime());
                 return ValidationResult.UNDETERMINED;
             }
@@ -335,6 +334,11 @@ public class IntervalConditionEvaluator {
 
     /**
      * Safely sorts immunizations chronologically by occurrenceDateTime.
+     *
+     * NOTE: This is now DB-safe:
+     * - Supports "YYYY-MM-DD"
+     * - Supports ISO date-time like "YYYY-MM-DDTHH:mm:ss", with or without timezone offsets
+     * - Unparseable entries are pushed to the end (stable), so valid dates still sort correctly
      */
     private List<Immunization> sortImmunizationsByDate(List<Immunization> immunizations) {
         if (immunizations == null || immunizations.isEmpty()) {
@@ -342,11 +346,78 @@ public class IntervalConditionEvaluator {
         }
         try {
             return immunizations.stream()
-                    .sorted(Comparator.comparing(Immunization::getOccurrenceDateTime))
+                    .sorted(Comparator.comparing(
+                            (Immunization imm) -> parseOccurrenceAsLocalDateTime(imm.getOccurrenceDateTime()),
+                            Comparator.nullsLast(Comparator.naturalOrder())
+                    ))
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Error sorting immunizations by date: {}. Returning unsorted list.", e.getMessage());
             return new ArrayList<>(immunizations);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // DATE PARSING (DB-SAFE)
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Parse occurrenceDateTime into LocalDateTime for sorting.
+     *
+     * Supported examples:
+     * - "2026-02-19"
+     * - "2026-02-19T14:30:00"
+     * - "2026-02-19T14:30:00Z"
+     * - "2026-02-19T14:30:00-05:00"
+     */
+    private LocalDateTime parseOccurrenceAsLocalDateTime(String occurrence) {
+        if (occurrence == null || occurrence.trim().isEmpty()) {
+            return null;
+        }
+
+        String s = occurrence.trim();
+
+        // 1) Plain date (YYYY-MM-DD)
+        try {
+            if (s.length() == 10) {
+                return LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay();
+            }
+        } catch (DateTimeParseException ignored) {
+            // fall through
+        }
+
+        // 2) Local date-time (YYYY-MM-DDTHH:mm:ss[.SSS])
+        try {
+            return LocalDateTime.parse(s, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException ignored) {
+            // fall through
+        }
+
+        // 3) Offset/Zulu date-time (YYYY-MM-DDTHH:mm:ss[.SSS]Z or ±HH:mm)
+        try {
+            return OffsetDateTime.parse(s, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toLocalDateTime();
+        } catch (DateTimeParseException ignored) {
+            // fall through
+        }
+
+        // 4) If DB stored epoch millis as string (rare, but happens)
+        try {
+            long epochMillis = Long.parseLong(s);
+            return LocalDateTime.ofEpochSecond(epochMillis / 1000L, 0, ZoneOffset.UTC);
+        } catch (Exception ignored) {
+            // fall through
+        }
+
+        log.warn("Unparseable occurrenceDateTime '{}'", occurrence);
+        return null;
+    }
+
+    /**
+     * Parse occurrenceDateTime into LocalDate for interval calculations.
+     * Uses the LocalDate portion of the parsed LocalDateTime.
+     */
+    private LocalDate parseOccurrenceAsLocalDate(String occurrence) {
+        LocalDateTime ldt = parseOccurrenceAsLocalDateTime(occurrence);
+        return (ldt == null) ? null : ldt.toLocalDate();
     }
 }

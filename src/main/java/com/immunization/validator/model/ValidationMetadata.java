@@ -1,59 +1,48 @@
 package com.immunization.validator.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 /**
- * Metadata about the validation process.
- * 
- * @author Saakad
+ * Metadata about a validation run.
+ * Attached to ValidationResponse to support auditing and debugging.
+ *
  * @version 3.0
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ValidationMetadata {
-    
-    /**
-     * Timestamp when validation was performed
-     */
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime validatedAt;
-    
-    /**
-     * State code used for validation
-     */
+
+    /** State validated against */
     private String state;
-    
-    /**
-     * School year used for validation
-     */
+
+    /** School year validated against */
     private String schoolYear;
-    
-    /**
-     * Total number of requirements checked
-     */
+
+    /** Total number of requirements evaluated */
     private Integer totalRequirements;
-    
-    /**
-     * Number of requirements satisfied
-     */
+
+    /** How many requirements were satisfied */
     private Integer satisfiedRequirements;
-    
-    /**
-     * Number of requirements not satisfied
-     */
+
+    /** How many requirements were not satisfied */
     private Integer unsatisfiedRequirements;
-    
-    /**
-     * Number of requirements that could not be determined
-     */
+
+    /** How many requirements could not be evaluated */
     private Integer undeterminedRequirements;
-    
-    /**
-     * Validator version
-     */
+
+    /** Version of the validator that produced this result */
     private String validatorVersion;
 }

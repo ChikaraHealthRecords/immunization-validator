@@ -25,6 +25,7 @@ import java.util.Comparator;
  * - Alternate requirements support with FLEXIBLE or STRICT modes
  * - Medical exemptions support
  * - Detailed error reporting and metadata
+ * - CVX code translation via database lookup (Version 3.1)
  *
  * Alternate Requirement Behavior:
  * - FLEXIBLE mode (default): If alternate fails, check primary requirement
@@ -34,7 +35,7 @@ import java.util.Comparator;
  *
  * @author Saakad
  * @since 2026-01-12
- * @version 3.0 - Added tri-state ComplianceStatus with enhanced alternate logic
+ * @version 3.1 - Added CVX code translation support
  */
 @Slf4j
 @Service
@@ -42,11 +43,12 @@ import java.util.Comparator;
 public class ValidationService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final String VALIDATOR_VERSION = "3.0.0";
+    private static final String VALIDATOR_VERSION = "3.1.0";
 
     private final RequirementsService requirementsService;
     private final DateConditionEvaluator dateConditionEvaluator;
     private final IntervalConditionEvaluator intervalConditionEvaluator;
+    private final VaccineLookupService vaccineLookupService;
 
     /**
      * Alternate requirement behavior mode.
@@ -125,6 +127,65 @@ public class ValidationService {
     }
 
     /**
+     * Translate CVX codes to vaccine group names for all immunizations.
+     * If an immunization has cvxCode but no vaccineCode, look up the vaccine groups
+     * from the database and expand into multiple immunizations (for combo vaccines).
+     *
+     * Example: CVX 110 (Pediarix) → expands to 3 immunizations: DTaP, HepB, Polio
+     *
+     * @param immunizations Original list of immunizations
+     * @return Expanded list with CVX codes translated to vaccine group names
+     */
+    private List<Immunization> translateCvxCodes(List<Immunization> immunizations) {
+        if (immunizations == null || immunizations.isEmpty()) {
+            return immunizations;
+        }
+
+        List<Immunization> translatedList = new ArrayList<>();
+
+        for (Immunization imm : immunizations) {
+            // If vaccineCode is already set, keep it as-is
+            if (imm.getVaccineCode() != null && !imm.getVaccineCode().isEmpty()) {
+                translatedList.add(imm);
+                continue;
+            }
+
+            // If cvxCode is set, translate it
+            if (imm.getCvxCode() != null) {
+                List<String> vaccineGroups = vaccineLookupService.getVaccineGroupsForCvx(imm.getCvxCode());
+
+                if (vaccineGroups.isEmpty()) {
+                    log.warn("No vaccine groups found for CVX code: {}", imm.getCvxCode());
+                    // Keep original immunization with null vaccineCode (will fail validation)
+                    translatedList.add(imm);
+                } else {
+                    // Expand into multiple immunizations (for combo vaccines)
+                    // CVX 110 → DTaP, HepB, Polio (3 separate immunizations)
+                    for (String group : vaccineGroups) {
+                        Immunization translated = new Immunization();
+                       // translated.setVaccineCode(group);
+                       translated.setVaccineCode(normalizeVaccineName(group));
+                        translated.setCvxCode(imm.getCvxCode());
+                        translated.setOccurrenceDateTime(imm.getOccurrenceDateTime());
+                        translatedList.add(translated);
+                    }
+                    log.debug("CVX {} → {} vaccine groups: {}",
+                            imm.getCvxCode(), vaccineGroups.size(), vaccineGroups);
+                }
+            } else {
+                // Neither cvxCode nor vaccineCode set - invalid data
+                log.warn("Immunization has neither cvxCode nor vaccineCode");
+                translatedList.add(imm);
+            }
+        }
+
+
+        return translatedList;
+
+
+    }
+
+    /**
      * Internal result object for validation tracking.
      * Tracks satisfied, unsatisfied, and undetermined requirements.
      */
@@ -165,6 +226,9 @@ public class ValidationService {
         if (patientImmunizations == null) {
             patientImmunizations = List.of();
         }
+
+        // ✅ ADDED: Translate CVX codes to vaccine group names
+        patientImmunizations = translateCvxCodes(patientImmunizations);
 
         // Group immunizations by vaccine code and count doses
         Map<String, Long> vaccineCounts = patientImmunizations.stream()
@@ -571,5 +635,43 @@ public class ValidationService {
         String start = patientId.substring(0, Math.min(4, length));
         String end = length > 4 ? patientId.substring(length - 4) : "";
         return start + "****" + end;
+    }
+
+    /**
+     * Normalize vaccine names to match YAML requirements.
+     * Database uses uppercase (DTAP, POLIO) but YAML uses mixed case (DTaP, Polio).
+     *
+     * @param vaccineName Vaccine name from database
+     * @return Normalized vaccine name matching YAML format
+     */
+    private String normalizeVaccineName(String vaccineName) {
+        if (vaccineName == null) return null;
+
+        // Map database names to YAML names
+        switch (vaccineName.toUpperCase()) {
+            case "DTAP":
+                return "DTaP";
+            case "POLIO":
+                return "Polio";
+            case "HEPB":
+                return "HepB";
+            case "HIB":
+                return "Hib";
+            case "MMR":
+                return "MMR";
+            case "VARICELLA":
+                return "Varicella";
+            case "MENACWY":
+                return "MenACWY";
+            case "TDAP":
+                return "Tdap";
+            case "MENVEO":
+                return "Menveo";
+            case "MENACTRA":
+                return "Menactra";
+            default:
+                // Return as-is if no mapping found
+                return vaccineName;
+        }
     }
 }

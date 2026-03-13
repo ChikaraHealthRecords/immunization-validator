@@ -19,7 +19,13 @@ import java.util.stream.Collectors;
 
 /**
  * REST controller for immunization validation endpoints.
- * Provides single patient and batch validation capabilities.
+ *
+ * V3 change: responses now carry ComplianceStatus (VALID / INVALID / UNDETERMINED).
+ * The deprecated {@code valid} boolean field is still populated for backward compatibility.
+ * Batch summary logging breaks out all three status buckets.
+ *
+ * @author Saakad
+ * @version 3.0
  */
 @Slf4j
 @RestController
@@ -27,20 +33,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Validated
 public class ValidationController {
-    
+
     private final ValidationService validationService;
-    
-    /**
-     * Validate a single patient's immunization record.
-     * 
-     * @param patient Patient to validate
-     * @param state State code to validate against
-     * @param age Age in years (optional if patient has birthDate)
-     * @param schoolYear School year identifier (alternative to age)
-     * @param responseMode Response mode: "simple" or "detailed"
-     * @param request HTTP request for logging
-     * @return Validation response
-     */
+
+    // ─── Single validation ────────────────────────────────────────────────────
+
     @PostMapping("/single")
     public ResponseEntity<ValidationResponse> validateSingle(
             @Valid @RequestBody Patient patient,
@@ -49,44 +46,36 @@ public class ValidationController {
             @RequestParam(value = "schoolYear", required = false) String schoolYear,
             @RequestParam(value = "responseMode", defaultValue = "simple") String responseMode,
             HttpServletRequest request) {
-        
+
         logRequest(request, patient.getId(), responseMode);
-        
+
         boolean detailedResponse = "detailed".equalsIgnoreCase(responseMode);
         ValidationResponse response = validationService.validate(
                 patient, state, age, schoolYear, detailedResponse);
-        
-        logResponse(patient.getId(), response.getValid(), responseMode, null);
-        
+
+        logResponse(patient.getId(), response.getStatus(), responseMode, null);
+
         return ResponseEntity.ok(response);
     }
-    
-    /**
-     * Validate multiple patients' immunization records in a batch.
-     * 
-     * @param batchRequest Batch validation request containing patients and parameters
-     * @param request HTTP request for logging
-     * @return Batch validation response
-     */
+
+    // ─── Batch validation ─────────────────────────────────────────────────────
+
     @PostMapping("/batch")
     public ResponseEntity<BatchValidationResponse> validateBatch(
             @Valid @RequestBody BatchValidationRequest batchRequest,
             HttpServletRequest request) {
-        
-        String firstPatientId = batchRequest.getPatients() != null && 
-                               !batchRequest.getPatients().isEmpty() ?
-                               batchRequest.getPatients().get(0).getId() : "unknown";
-        
-        logRequest(request, firstPatientId, batchRequest.getResponseMode());
-        log.info("Batch validation: {} patients, state: {}, age: {}, schoolYear: {}, mode: {}",
+
+        String firstId = batchRequest.getPatients() != null && !batchRequest.getPatients().isEmpty()
+                ? batchRequest.getPatients().get(0).getId() : "unknown";
+
+        logRequest(request, firstId, batchRequest.getResponseMode());
+        log.info("Batch validation: {} patients, state={}, age={}, schoolYear={}, mode={}",
                 batchRequest.getPatients() != null ? batchRequest.getPatients().size() : 0,
-                batchRequest.getState(),
-                batchRequest.getAge(),
-                batchRequest.getSchoolYear(),
-                batchRequest.getResponseMode());
-        
+                batchRequest.getState(), batchRequest.getAge(),
+                batchRequest.getSchoolYear(), batchRequest.getResponseMode());
+
         boolean detailedResponse = "detailed".equalsIgnoreCase(batchRequest.getResponseMode());
-        
+
         List<ValidationResponse> results = batchRequest.getPatients().stream()
                 .map(patient -> validationService.validate(
                         patient,
@@ -95,159 +84,89 @@ public class ValidationController {
                         batchRequest.getSchoolYear(),
                         detailedResponse))
                 .collect(Collectors.toList());
-        
+
         BatchValidationResponse response = BatchValidationResponse.builder()
                 .results(results)
                 .build();
-        
-        long validCount = results.stream().mapToLong(r -> Boolean.TRUE.equals(r.getValid()) ? 1 : 0).sum();
-        logResponse(firstPatientId, validCount == results.size(), batchRequest.getResponseMode(), 
-                   String.format("%d/%d valid", validCount, results.size()));
-        
+
+        // V3: log all three buckets
+        long validCount        = results.stream().filter(r -> r.getStatus() == ComplianceStatus.VALID).count();
+        long invalidCount      = results.stream().filter(r -> r.getStatus() == ComplianceStatus.INVALID).count();
+        long undeterminedCount = results.stream().filter(r -> r.getStatus() == ComplianceStatus.UNDETERMINED).count();
+
+        logResponse(firstId,
+                validCount == results.size() ? ComplianceStatus.VALID : ComplianceStatus.INVALID,
+                batchRequest.getResponseMode(),
+                String.format("%d VALID / %d INVALID / %d UNDETERMINED",
+                        validCount, invalidCount, undeterminedCount));
+
         return ResponseEntity.ok(response);
     }
-    
-    /**
-     * Health check endpoint.
-     * 
-     * @return Simple health status
-     */
+
+    // ─── Health check ─────────────────────────────────────────────────────────
+
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("OK");
     }
-    
-    /**
-     * Log incoming request with privacy protection.
-     * 
-     * @param request HTTP request
-     * @param patientId Patient identifier (will be masked)
-     * @param responseMode Response mode used
-     */
-    private void logRequest(HttpServletRequest request, String patientId, String responseMode) {
-        String maskedId = maskPatientId(patientId);
-        String clientIp = getClientIp(request);
-        log.info("Request received - Source: {}, Patient ID: {}, Response Mode: {}, Timestamp: {}",
-                clientIp, maskedId, responseMode, System.currentTimeMillis());
-    }
-    
-    /**
-     * Log response with privacy protection.
-     * 
-     * @param patientId Patient identifier (will be masked)
-     * @param valid Whether validation was successful
-     * @param responseMode Response mode used
-     * @param additionalInfo Additional information (e.g., for batch requests)
-     */
-    private void logResponse(String patientId, Boolean valid, String responseMode, String additionalInfo) {
-        String maskedId = maskPatientId(patientId);
-        String logMessage = String.format("Response sent - Patient ID: %s, Valid: %s, Response Mode: %s, Timestamp: %d",
-                maskedId, valid, responseMode, System.currentTimeMillis());
-        if (additionalInfo != null && !additionalInfo.isEmpty()) {
-            logMessage += ", " + additionalInfo;
-        }
-        log.info(logMessage);
-    }
-    
-    /**
-     * Mask patient identifier for logging.
-     * Shows first 4 and last 4 characters, masks the middle.
-     * 
-     * @param patientId Original patient ID
-     * @return Masked patient ID
-     */
-    private String maskPatientId(String patientId) {
-        if (patientId == null || patientId.length() <= 8) {
-            return "****";
-        }
-        int length = patientId.length();
-        String start = patientId.substring(0, Math.min(4, length));
-        String end = length > 4 ? patientId.substring(length - 4) : "";
-        return start + "****" + end;
-    }
-    
-    /**
-     * Extract client IP address from request, handling proxies.
-     * 
-     * @param request HTTP request
-     * @return Client IP address
-     */
-    private String getClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-        return request.getRemoteAddr();
-    }
-    
-    /**
-     * Exception handler for validation errors.
-     * 
-     * @param ex Exception that occurred
-     * @param request HTTP request
-     * @return Error response
-     */
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ValidationResponse> handleException(Exception ex, HttpServletRequest request) {
-//        String clientIp = getClientIp(request);
-//        log.error("Error processing request - Source: {}, Error: {}, Timestamp: {}",
-//                clientIp, ex.getMessage(), System.currentTimeMillis(), ex);
-//
-//        // Return error response without patient information
-//        ValidationResponse errorResponse = ValidationResponse.builder()
-//                .valid(false)
-//                .build();
-//
-//        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//    }
+
+    // ─── Exception handlers ───────────────────────────────────────────────────
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ValidationResponse> handleMissingParameter(
             MissingServletRequestParameterException ex, HttpServletRequest request) {
-        String clientIp = getClientIp(request);
         log.warn("Missing required parameter - Source: {}, Parameter: {}, Timestamp: {}",
-                clientIp, ex.getParameterName(), System.currentTimeMillis());
-
-        ValidationResponse errorResponse = ValidationResponse.builder()
-                .valid(false)
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                getClientIp(request), ex.getParameterName(), System.currentTimeMillis());
+        ValidationResponse err = ValidationResponse.builder().build();
+        err.setStatusWithBackwardCompatibility(ComplianceStatus.INVALID);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
     }
 
-    @ExceptionHandler({
-            HttpMessageNotReadableException.class,
-            MethodArgumentNotValidException.class
-    })
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentNotValidException.class})
     public ResponseEntity<ValidationResponse> handleBadRequest(
             Exception ex, HttpServletRequest request) {
-        String clientIp = getClientIp(request);
         log.warn("Invalid request - Source: {}, Error: {}, Timestamp: {}",
-                clientIp, ex.getMessage(), System.currentTimeMillis());
-
-        ValidationResponse errorResponse = ValidationResponse.builder()
-                .valid(false)
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                getClientIp(request), ex.getMessage(), System.currentTimeMillis());
+        ValidationResponse err = ValidationResponse.builder().build();
+        err.setStatusWithBackwardCompatibility(ComplianceStatus.INVALID);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ValidationResponse> handleException(
             Exception ex, HttpServletRequest request) {
-        String clientIp = getClientIp(request);
         log.error("Error processing request - Source: {}, Error: {}, Timestamp: {}",
-                clientIp, ex.getMessage(), System.currentTimeMillis(), ex);
+                getClientIp(request), ex.getMessage(), System.currentTimeMillis(), ex);
+        ValidationResponse err = ValidationResponse.builder().build();
+        err.setStatusWithBackwardCompatibility(ComplianceStatus.UNDETERMINED);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
+    }
 
-        ValidationResponse errorResponse = ValidationResponse.builder()
-                .valid(false)
-                .build();
+    // ─── Private helpers ──────────────────────────────────────────────────────
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    private void logRequest(HttpServletRequest request, String patientId, String responseMode) {
+        log.info("Request received - Source: {}, Patient ID: {}, Mode: {}, Timestamp: {}",
+                getClientIp(request), maskPatientId(patientId), responseMode, System.currentTimeMillis());
+    }
+
+    private void logResponse(String patientId, ComplianceStatus status,
+                             String responseMode, String extra) {
+        String msg = String.format("Response sent - Patient ID: %s, Status: %s, Mode: %s, Timestamp: %d",
+                maskPatientId(patientId), status, responseMode, System.currentTimeMillis());
+        if (extra != null && !extra.isEmpty()) msg += ", " + extra;
+        log.info(msg);
+    }
+
+    private String maskPatientId(String patientId) {
+        if (patientId == null || patientId.length() <= 8) return "****";
+        return patientId.substring(0, 4) + "****" + patientId.substring(patientId.length() - 4);
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isEmpty()) return xff.split(",")[0].trim();
+        String xri = request.getHeader("X-Real-IP");
+        if (xri != null && !xri.isEmpty()) return xri;
+        return request.getRemoteAddr();
     }
 }
-

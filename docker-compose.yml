@@ -1,21 +1,111 @@
 version: '3.8'
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Complete Docker Compose Configuration
+# Runs both PostgreSQL database and Spring Boot application
+# ═══════════════════════════════════════════════════════════════════════════
+
 services:
+  # ─────────────────────────────────────────────────────────────────────────
+  # PostgreSQL Database Service
+  # ─────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: immunization-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-immunization_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-immunization_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - immunization-network
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Spring Boot Application Service
+  # ─────────────────────────────────────────────────────────────────────────
   immunization-validator:
     build:
       context: .
       dockerfile: Dockerfile
     image: immunization-validator:latest
     container_name: immunization-validator
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
+      # Server configuration
       - SERVER_PORT=8080
+
+      # Database connection (uses postgres service name as host)
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${DB_NAME:-immunization_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-postgres}
+
+      # JPA configuration
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SPRING_JPA_SHOW_SQL=false
+
+      # Application configuration
+      - IMMUNIZATION_VALIDATION_ALTERNATE_BEHAVIOR=${ALTERNATE_BEHAVIOR:-FLEXIBLE}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/v1/validate/health"]
       interval: 30s
       timeout: 3s
       retries: 3
-      start_period: 40s
-    restart: unless-stopped
+      start_period: 60s  # Increased to allow time for DB connection
+    depends_on:
+      postgres:
+        condition: service_healthy  # Wait for PostgreSQL to be healthy
+    networks:
+      - immunization-network
 
+  # ─────────────────────────────────────────────────────────────────────────
+  # pgAdmin - Optional Database Management Tool
+  # Start with: docker-compose --profile tools up -d
+  # ─────────────────────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: immunization-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@immunization.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - immunization-network
+    profiles:
+      - tools  # Only starts with --profile tools flag
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Volumes - Persistent storage for database and pgAdmin
+# ═══════════════════════════════════════════════════════════════════════════
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Network - Allows containers to communicate
+# ═══════════════════════════════════════════════════════════════════════════
+networks:
+  immunization-network:
+    driver: bridge

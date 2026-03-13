@@ -117,3 +117,7 @@ secrets/
 *.key
 *.pem
 *.p12
+
+# Docker environment
+postgres_data/
+pgadmin_data/

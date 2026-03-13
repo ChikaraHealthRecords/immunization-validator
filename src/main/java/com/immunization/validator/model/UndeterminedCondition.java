@@ -1,42 +1,36 @@
 package com.immunization.validator.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Represents a validation condition that could not be evaluated.
+ * Describes a requirement that could not be evaluated due to missing data.
+ * Included in ValidationResponse when status is UNDETERMINED.
  *
- * @author Saakad
  * @version 3.0
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UndeterminedCondition {
 
-    /**
-     * The vaccine code this condition applies to
-     */
+    /** Vaccine code affected (e.g. "MMR", "DTaP") */
     private String vaccineCode;
 
-    /**
-     * The condition that could not be evaluated
-     */
+    /** The condition expression that could not be evaluated */
     private String condition;
 
-    /**
-     * Reason why the condition is undetermined
-     */
+    /** Why the condition could not be evaluated */
     private String reason;
 
-    /**
-     * Detailed error information
-     */
+    /** Additional context */
     private String details;
 
-    /**
-     * Suggested action to resolve
-     */
+    /** What the caller can provide to allow evaluation */
     private String suggestion;
 }

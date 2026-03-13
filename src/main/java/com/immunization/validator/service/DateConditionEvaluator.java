@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -188,11 +190,9 @@ public class DateConditionEvaluator {
             // Get the specified dose (1-indexed, already sorted)
             Immunization dose = immunizations.get(doseNumber - 1);
 
-            // Parse dose date
-            LocalDate doseDate;
-            try {
-                doseDate = LocalDate.parse(dose.getOccurrenceDateTime());
-            } catch (Exception e) {
+            // Parse dose date (supports "YYYY-MM-DD" and ISO date-time)
+            LocalDate doseDate = parseOccurrenceAsLocalDate(dose.getOccurrenceDateTime());
+            if (doseDate == null) {
                 log.warn("Cannot parse dose date '{}' for condition '{}'",
                         dose.getOccurrenceDateTime(), condition);
                 return ValidationResult.UNDETERMINED;
@@ -259,11 +259,9 @@ public class DateConditionEvaluator {
             // Get the specified dose (1-indexed, already sorted)
             Immunization dose = immunizations.get(doseNumber - 1);
 
-            // Parse dose date
-            LocalDate doseDate;
-            try {
-                doseDate = LocalDate.parse(dose.getOccurrenceDateTime());
-            } catch (Exception e) {
+            // Parse dose date (supports "YYYY-MM-DD" and ISO date-time)
+            LocalDate doseDate = parseOccurrenceAsLocalDate(dose.getOccurrenceDateTime());
+            if (doseDate == null) {
                 log.warn("Cannot parse dose date '{}' for condition '{}'",
                         dose.getOccurrenceDateTime(), condition);
                 return ValidationResult.UNDETERMINED;
@@ -306,6 +304,11 @@ public class DateConditionEvaluator {
      * This method provides defensive sorting to ensure immunizations are in chronological order
      * regardless of input order. Handles null lists and unparseable dates gracefully.
      *
+     * IMPORTANT PRODUCTION FIX:
+     * - Sorts using parsed LocalDate (supports "YYYY-MM-DD" and ISO date-time),
+     *   not raw string compare.
+     * - If a date is unparseable, it is pushed to the end (so valid dated doses come first).
+     *
      * @param immunizations List of immunizations (may be null or unsorted)
      * @return Sorted list of immunizations, or empty list if input is null
      */
@@ -316,12 +319,58 @@ public class DateConditionEvaluator {
 
         try {
             return immunizations.stream()
-                    .sorted(Comparator.comparing(Immunization::getOccurrenceDateTime))
+                    .sorted(Comparator.comparing(
+                            (Immunization im) -> {
+                                LocalDate d = parseOccurrenceAsLocalDate(im.getOccurrenceDateTime());
+                                // push bad/null dates to the end
+                                return d == null ? LocalDate.MAX : d;
+                            }
+                    ))
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.warn("Error sorting immunizations by date: {}. Returning unsorted list.", e.getMessage());
             return new ArrayList<>(immunizations);
         }
+    }
+
+    /**
+     * Parse an occurrenceDateTime string into LocalDate.
+     *
+     * Supports:
+     * - "YYYY-MM-DD"
+     * - ISO date-time like "YYYY-MM-DDTHH:mm:ss" (and similar)
+     *
+     * Returns null if not parseable.
+     */
+    private LocalDate parseOccurrenceAsLocalDate(String occurrenceDateTime) {
+        if (occurrenceDateTime == null || occurrenceDateTime.isBlank()) {
+            return null;
+        }
+
+        // Fast-path for YYYY-MM-DD
+        try {
+            return LocalDate.parse(occurrenceDateTime);
+        } catch (DateTimeParseException ignored) {
+            // fall through
+        }
+
+        // Try ISO date-time (and common variations). Convert to LocalDate.
+        try {
+            return LocalDateTime.parse(occurrenceDateTime).toLocalDate();
+        } catch (DateTimeParseException ignored) {
+            // fall through
+        }
+
+        // Common case: value may include timezone "Z" or offset; try trimming if present
+        // (If your data stores offsets, consider storing normalized ISO in DB.)
+        try {
+            String trimmed = occurrenceDateTime.replace("Z", "");
+            return LocalDateTime.parse(trimmed).toLocalDate();
+        } catch (Exception ignored) {
+            // fall through
+        }
+
+        return null;
     }
 
     /**
@@ -342,6 +391,46 @@ public class DateConditionEvaluator {
             log.error("Invalid birth date format: '{}' - cannot evaluate condition '{}'",
                     birthDateStr, condition);
             return ValidationResult.UNDETERMINED;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Backward-compatible boolean overloads (optional; helps older tests/callers)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @deprecated Prefer {@link #evaluateConditions(List, List, LocalDate)} which returns ValidationResult.
+     * This boolean method treats ONLY SATISFIED as true.
+     */
+    @Deprecated
+    public boolean evaluateConditions(List<String> conditions,
+                                      List<Immunization> immunizations,
+                                      String birthDateStr) {
+        try {
+            LocalDate birthDate = LocalDate.parse(birthDateStr);
+            return evaluateConditions(conditions, immunizations, birthDate) == ValidationResult.SATISFIED;
+        } catch (Exception e) {
+            log.error("Invalid birth date format: {}", birthDateStr);
+            // Match legacy behavior: do not fail callers on birth date parse problems.
+            return true;
+        }
+    }
+
+    /**
+     * @deprecated Prefer {@link #evaluateCondition(String, List, LocalDate)} which returns ValidationResult.
+     * This boolean method treats ONLY SATISFIED as true.
+     */
+    @Deprecated
+    public boolean evaluateConditionLegacyBoolean(String condition,
+                                                  List<Immunization> immunizations,
+                                                  String birthDateStr) {
+        try {
+            LocalDate birthDate = LocalDate.parse(birthDateStr);
+            return evaluateCondition(condition, immunizations, birthDate) == ValidationResult.SATISFIED;
+        } catch (Exception e) {
+            log.error("Invalid birth date format: {}", birthDateStr);
+            // Match legacy behavior: do not fail callers on birth date parse problems.
+            return true;
         }
     }
 }
