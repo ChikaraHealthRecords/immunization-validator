@@ -1,0 +1,15 @@
+# ─── DOCKER PROFILE ───────────────────────────────────────────────────────────
+# Active when: SPRING_PROFILES_ACTIVE=docker (set in docker-compose.yml)
+# Purpose: Runs inside Docker network — uses service name as DB host
+# ──────────────────────────────────────────────────────────────────────────────
+
+server:
+  port: 8080   # Mapped to host 8080 via docker-compose ports
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/immunization_db   # 'postgres' = docker-compose service name
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    show-sql: false
