@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Extraction Demo</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Document Extraction Strategy Demo</h1>
+        <p>Spring Boot monolith with cost-aware tool selection, web UI, and REST APIs.</p>
+    </header>
+
+    <section class="card">
+        <h2>Upload and Extract</h2>
+        <form method="post" action="/extract" enctype="multipart/form-data">
+            <label for="file">Document</label>
+            <input id="file" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.txt,image/*,application/pdf,text/plain" required>
+
+            <h3>Select one or more tools</h3>
+            <div class="tools-grid">
+                <label th:each="tool : ${tools}" class="tool-card">
+                    <input type="checkbox" name="toolIds" th:value="${tool.id()}" th:checked="${selectedToolIds != null and selectedToolIds.contains(tool.id())}">
+                    <div>
+                        <strong th:text="${tool.displayName()}">Tool Name</strong>
+                        <div class="meta" th:text="${tool.category()}">Category</div>
+                        <div><span class="label">Best for:</span> <span th:text="${tool.bestFor()}"></span></div>
+                        <div><span class="label">Estimated cost/page:</span> $<span th:text="${tool.estimatedCostPerPage()}"></span></div>
+                        <div><span class="label">Advantages:</span>
+                            <ul>
+                                <li th:each="item : ${tool.advantages()}" th:text="${item}"></li>
+                            </ul>
+                        </div>
+                        <div><span class="label">Tradeoffs:</span>
+                            <ul>
+                                <li th:each="item : ${tool.tradeoffs()}" th:text="${item}"></li>
+                            </ul>
+                        </div>
+                        <div class="status" th:if="${tool.requiresConfiguration()}">
+                            Cloud config required in prod: <span th:text="${tool.configured() ? 'Configured' : 'Demo mode / not configured'}"></span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+            <button type="submit">Run Extraction</button>
+        </form>
+    </section>
+
+    <section class="card" th:if="${response != null}">
+        <h2>Document Summary</h2>
+        <div class="summary-grid">
+            <div><span class="label">Filename:</span> <span th:text="${response.document().originalFilename()}"></span></div>
+            <div><span class="label">Type:</span> <span th:text="${response.document().contentType()}"></span></div>
+            <div><span class="label">Pages:</span> <span th:text="${response.document().pageCount()}"></span></div>
+            <div><span class="label">Size:</span> <span th:text="${response.document().sizeBytes()}"></span> bytes</div>
+        </div>
+        <ul th:if="${!response.document().warnings().isEmpty()}">
+            <li th:each="warning : ${response.document().warnings()}" th:text="${warning}"></li>
+        </ul>
+    </section>
+
+    <section class="card" th:if="${response != null}">
+        <h2>Results</h2>
+        <div th:each="result : ${response.results()}" class="result-card">
+            <h3><span th:text="${result.toolDisplayName()}"></span> - <span th:text="${result.status()}"></span></h3>
+            <p><span class="label">Estimated Cost:</span> $<span th:text="${result.estimatedCost()}"></span></p>
+            <p><span class="label">Mode:</span> <span th:text="${result.simulated() ? 'Demo simulation' : 'Live/local execution'}"></span></p>
+            <div th:if="${!result.warnings().isEmpty()}">
+                <p class="label">Warnings</p>
+                <ul>
+                    <li th:each="warning : ${result.warnings()}" th:text="${warning}"></li>
+                </ul>
+            </div>
+            <div th:if="${!result.notes().isEmpty()}">
+                <p class="label">Notes</p>
+                <ul>
+                    <li th:each="note : ${result.notes()}" th:text="${note}"></li>
+                </ul>
+            </div>
+            <div th:if="${!result.fields().isEmpty()}">
+                <p class="label">Fields</p>
+                <table>
+                    <tbody>
+                    <tr th:each="entry : ${result.fields().entrySet()}">
+                        <td th:text="${entry.key}"></td>
+                        <td th:text="${entry.value}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <p class="label">Extracted Text</p>
+                <pre th:text="${result.extractedText()}"></pre>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

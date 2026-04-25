@@ -1,0 +1,52 @@
+server:
+  port: 8089
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 20MB
+  thymeleaf:
+    cache: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  storage:
+    max-file-size-mb: 15
+    allowed-extensions:
+      - pdf
+      - png
+      - jpg
+      - jpeg
+      - tif
+      - tiff
+      - txt
+
+  cloud:
+    demo-mode: true
+    textract:
+      enabled: false
+      endpoint: demo
+    azure:
+      enabled: false
+      endpoint: demo
+    google:
+      enabled: false
+      endpoint: demo
+
+  pricing:
+    pdfbox-per-page: 0.0000
+    tika-per-page: 0.0000
+    tess4j-per-page: 0.0020
+    textract-per-page: 0.0150
+    azure-per-page: 0.0120
+    google-per-page: 0.0100
+
+  ocr:
+    tessdata-path: "C:/Program Files/Tesseract-OCR/tessdata"
+    language: eng
