@@ -129,6 +129,7 @@ class ValidationServiceTest {
                                 AlternateRequirement.builder()
                                         .minDoses(4)
                                         .condition("4th dose on or after 4th birthday")
+                                        .dateConditions(List.of("4th dose on or after 4th birthday"))
                                         .description("4 doses acceptable if 4th dose on/after 4th birthday")
                                         .build()
                         ))
@@ -139,7 +140,6 @@ class ValidationServiceTest {
 
         ValidationResponse response = validationService.validate(patient, "MA", 5, null, true);
 
-        // ✅ AFTER FIX: This should correctly fail
         assertFalse(response.getValid(),
                 "Patient with 4th dose before 4th birthday should require 5th dose");
     }
@@ -163,6 +163,7 @@ class ValidationServiceTest {
                                 AlternateRequirement.builder()
                                         .minDoses(4)
                                         .condition("4th dose on or after 4th birthday")
+                                        .dateConditions(List.of("4th dose on or after 4th birthday"))
                                         .description("4 doses acceptable if 4th dose on/after 4th birthday")
                                         .build()
                         ))
@@ -173,7 +174,6 @@ class ValidationServiceTest {
 
         ValidationResponse response = validationService.validate(patient, "MA", 5, null, false);
 
-        // ✅ AFTER FIX: Should pass with 4 doses when 4th dose on 4th birthday
         assertTrue(response.getValid(),
                 "4 doses should be valid when 4th dose on/after 4th birthday");
     }
@@ -197,6 +197,7 @@ class ValidationServiceTest {
                                 AlternateRequirement.builder()
                                         .minDoses(4)
                                         .condition("4th dose on or after 4th birthday")
+                                        .dateConditions(List.of("4th dose on or after 4th birthday"))
                                         .description("4 doses acceptable if 4th dose on/after 4th birthday")
                                         .build()
                         ))
@@ -207,7 +208,6 @@ class ValidationServiceTest {
 
         ValidationResponse response = validationService.validate(patient, "MA", 5, null, false);
 
-        // ✅ AFTER FIX: Should pass with 4 doses when 4th dose after 4th birthday
         assertTrue(response.getValid(),
                 "4 doses should be valid when 4th dose after 4th birthday");
     }
@@ -346,8 +346,8 @@ class ValidationServiceTest {
     }
 
     @Test
-    @DisplayName("BUG DEMO: All doses on same day - documents current behavior")
-    void testAllDosesOnSameDay_DocumentsBehavior() {
+    @DisplayName("All doses on same day - de-duplication collapses to 1 dose")
+    void testAllDosesOnSameDay_DeduplicatesToOne() {
         String sameDay = "2024-01-01";
         Patient patient = createPatient("patient-013", "2019-01-01", List.of(
                 createImmunization("DTaP", sameDay),
@@ -363,10 +363,11 @@ class ValidationServiceTest {
         when(requirementsService.getRequirements(anyString(), any(Integer.class)))
                 .thenReturn(requirements);
 
-        ValidationResponse response = validationService.validate(patient, "MA", 5, null, false);
+        ValidationResponse response = validationService.validate(patient, "MA", 5, null, true);
 
-        assertTrue(response.getValid(),
-                "BUG DOCUMENTED: System currently accepts 5 doses on same day (future enhancement needed)");
+        assertFalse(response.getValid(),
+                "5 duplicate doses on same day should de-dup to 1, failing the 5-dose requirement");
+        assertEquals(1, response.getUnmetRequirements().get(0).getFoundDoses());
     }
 
     // ========================================
