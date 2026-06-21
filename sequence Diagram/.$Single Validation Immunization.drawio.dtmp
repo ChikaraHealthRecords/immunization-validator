@@ -1,0 +1,203 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Page-1" id="2YBvvXClWsGukQMizWep">
+    <mxGraphModel dx="1488" dy="640" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-2" value="Client" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="150" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-3" value="Controller" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="241" y="20" width="150" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-4" value="ValidationService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="529" y="20" width="150" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-5" value="RequirementsService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="847" y="20" width="167" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-6" value="VaccineLookupService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1064" y="20" width="176" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-7" value="Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="20" width="150" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-8" value="POST /validate/single" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-2" target="LLnmtkx-Pc4RQT-UoOg7-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="214" y="129" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-9" value="validate(patient, state)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-3" target="LLnmtkx-Pc4RQT-UoOg7-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="468" y="183" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-10" value="getRequirements(&quot;MA&quot;, &quot;preschool&quot;)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-4" target="LLnmtkx-Pc4RQT-UoOg7-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="776" y="237" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-11" value="6 requirements" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-5" target="LLnmtkx-Pc4RQT-UoOg7-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="779" y="291" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-12" value="translateCvxCodes(immunizations)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-4" target="LLnmtkx-Pc4RQT-UoOg7-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="886" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-13" value="SELECT vaccine_groups WHERE cvx=110" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-6" target="LLnmtkx-Pc4RQT-UoOg7-7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1337" y="399" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-14" value="[DTaP, HepB, Polio]" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-7" target="LLnmtkx-Pc4RQT-UoOg7-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1340" y="453" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-15" value="Expanded immunizations" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-6" target="LLnmtkx-Pc4RQT-UoOg7-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="889" y="507" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-16" value="buildResponse()" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-4" target="LLnmtkx-Pc4RQT-UoOg7-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="655" y="609" />
+              <mxPoint x="655" y="639" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-17" value="ValidationResponse" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-4" target="LLnmtkx-Pc4RQT-UoOg7-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="471" y="693" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-18" value="HTTP 200 OK + JSON" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-3" target="LLnmtkx-Pc4RQT-UoOg7-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="217" y="747" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-19" value="Dose counting&#xa;Requirement validation&#xa;Date/interval checking" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="366" y="527" width="475" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-20" value="Total: ~100ms" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="70" y="767" width="1460" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-21" value="SchoolSystem" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="20" y="920" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-22" value="Controller" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="344" y="920" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-23" value="ValidationService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="590" y="920" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-24" value="RequirementsService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="839" y="920" width="167" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-25" value="Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="920" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-26" value="loop" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#B3B3B3;height=20;width=40" vertex="1" parent="1">
+          <mxGeometry x="555" y="1211" width="587" height="203" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-27" value="[For each student (parallel)]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="LLnmtkx-Pc4RQT-UoOg7-26">
+          <mxGeometry x="40" width="547" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-28" value="POST /validate/batch (100 students)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-21" target="LLnmtkx-Pc4RQT-UoOg7-22">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="266" y="1029" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-29" value="validateBatch(patients)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-22" target="LLnmtkx-Pc4RQT-UoOg7-23">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="551" y="1083" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-30" value="getRequirements() - ONCE" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-23" target="LLnmtkx-Pc4RQT-UoOg7-24">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="802" y="1137" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-31" value="6 requirements" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-24" target="LLnmtkx-Pc4RQT-UoOg7-23">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="805" y="1191" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-32" value="CVX lookup" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-23" target="LLnmtkx-Pc4RQT-UoOg7-25">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="906" y="1292" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-33" value="vaccine groups" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-25" target="LLnmtkx-Pc4RQT-UoOg7-23">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="909" y="1346" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-34" value="Collect all results" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-23" target="LLnmtkx-Pc4RQT-UoOg7-23">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="716" y="1458" />
+              <mxPoint x="716" y="1488" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-35" value="BatchValidationResponse" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-23" target="LLnmtkx-Pc4RQT-UoOg7-22">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="554" y="1542" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-36" value="HTTP 200 OK (100 results)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="LLnmtkx-Pc4RQT-UoOg7-22" target="LLnmtkx-Pc4RQT-UoOg7-21">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="269" y="1596" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-37" value="Validate + build response" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="565" y="1366" width="200" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="LLnmtkx-Pc4RQT-UoOg7-38" value="Total: ~3 seconds" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1616" width="1086" height="48" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

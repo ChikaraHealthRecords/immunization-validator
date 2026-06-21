@@ -93,7 +93,7 @@ public class ValidationService {
             log.warn("No requirements found for state: {}, age: {}, schoolYear: {}",
                     stateCode, effectiveAge, schoolYear);
 
-            return ValidationResponse.builder()
+            ValidationResponse noReqResponse = ValidationResponse.builder()
                     .patientId(patient.getId())
                     .status(ComplianceStatus.UNDETERMINED)
                     .message("No validation requirements found for the specified criteria")
@@ -106,6 +106,8 @@ public class ValidationService {
                                     .build()
                     ))
                     .build();
+            noReqResponse.setStatusWithBackwardCompatibility(ComplianceStatus.UNDETERMINED);
+            return noReqResponse;
         }
 
         // Validate requirements
@@ -163,10 +165,10 @@ public class ValidationService {
                     // CVX 110 → DTaP, HepB, Polio (3 separate immunizations)
                     for (String group : vaccineGroups) {
                         Immunization translated = new Immunization();
-                       // translated.setVaccineCode(group);
-                       translated.setVaccineCode(normalizeVaccineName(group));
+                        translated.setVaccineCode(normalizeVaccineName(group));
                         translated.setCvxCode(imm.getCvxCode());
                         translated.setOccurrenceDateTime(imm.getOccurrenceDateTime());
+                        translated.setLotNumber(imm.getLotNumber());
                         translatedList.add(translated);
                     }
                     log.debug("CVX {} → {} vaccine groups: {}",
@@ -181,8 +183,52 @@ public class ValidationService {
 
 
         return translatedList;
+    }
 
+    /**
+     * De-duplicate immunizations that share the same vaccineCode and date.
+     * When duplicates exist, keep the record that has a lot number (verified dose).
+     * Records without a lot number are never disqualified on their own — only
+     * dropped when a duplicate with a lot number exists for the same vaccine+date.
+     */
+    private List<Immunization> deduplicateImmunizations(List<Immunization> immunizations) {
+        if (immunizations == null || immunizations.size() <= 1) {
+            return immunizations;
+        }
 
+        // Key: vaccineCode + occurrenceDateTime
+        Map<String, Immunization> best = new LinkedHashMap<>();
+
+        for (Immunization imm : immunizations) {
+            String key = (imm.getVaccineCode() != null ? imm.getVaccineCode() : "") + "|"
+                    + (imm.getOccurrenceDateTime() != null ? imm.getOccurrenceDateTime() : "");
+
+            Immunization existing = best.get(key);
+            if (existing == null) {
+                best.put(key, imm);
+            } else {
+                boolean existingHasLot = existing.getLotNumber() != null && !existing.getLotNumber().isBlank();
+                boolean newHasLot = imm.getLotNumber() != null && !imm.getLotNumber().isBlank();
+
+                if (!existingHasLot && newHasLot) {
+                    // Replace: prefer the one with a lot number
+                    best.put(key, imm);
+                    log.debug("De-dup {}: replaced record without lot number with lot# {}",
+                            key, imm.getLotNumber());
+                } else if (existingHasLot || !newHasLot) {
+                    log.debug("De-dup {}: keeping existing record (lot# {})",
+                            key, existing.getLotNumber());
+                }
+            }
+        }
+
+        int removed = immunizations.size() - best.size();
+        if (removed > 0) {
+            log.info("De-duplicated immunizations: {} duplicates removed, {} unique records remain",
+                    removed, best.size());
+        }
+
+        return new ArrayList<>(best.values());
     }
 
     /**
@@ -229,6 +275,9 @@ public class ValidationService {
 
         // ✅ ADDED: Translate CVX codes to vaccine group names
         patientImmunizations = translateCvxCodes(patientImmunizations);
+
+        // De-duplicate: same vaccineCode + date = one dose, prefer the record with a lot number
+        patientImmunizations = deduplicateImmunizations(patientImmunizations);
 
         // Group immunizations by vaccine code and count doses
         Map<String, Long> vaccineCounts = patientImmunizations.stream()

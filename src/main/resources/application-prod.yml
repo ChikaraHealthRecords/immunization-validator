@@ -1,0 +1,61 @@
+# ─── PRODUCTION PROFILE ───────────────────────────────────────────────────────
+# Active when: SPRING_PROFILES_ACTIVE=prod (set in ECS task definition on AWS)
+# Purpose: Connects to AWS RDS instead of local Docker postgres.
+# All sensitive values come from environment variables injected by AWS Secrets Manager —
+# never hardcoded here. This file is safe to commit to GitHub.
+# ─────────────────────────────────────────────────────────────────────────────
+
+server:
+  # AWS ECS maps container port 8080 to the load balancer.
+  # Keep this the same as Docker so the same image works in both environments.
+  port: 8080
+
+spring:
+  datasource:
+    # DB_URL is injected by ECS from AWS Secrets Manager at container startup.
+    # Format: jdbc:postgresql://<RDS-ENDPOINT>:5432/immunization_db
+    # Never put the actual RDS endpoint here — it's a secret.
+    url: ${DB_URL}
+
+    # These are also injected from Secrets Manager via ECS task definition.
+    # The app will fail to start if these env vars are missing — that's intentional
+    # (fail fast rather than connect with wrong credentials).
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+    hikari:
+      # Fewer connections than local/docker — RDS db.t3.micro supports ~80 max.
+      # Keep this low to avoid exhausting the RDS connection limit under load.
+      maximum-pool-size: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      # validate = Hibernate checks the DB schema matches the JPA entities on startup,
+      # but makes NO changes. Prevents accidental schema modification in production.
+      # Never use create, create-drop, or update in production.
+      ddl-auto: validate
+    show-sql: false   # Never log SQL in prod — it floods CloudWatch logs
+
+  cache:
+    type: simple
+
+# ─── Actuator ────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only expose health and info in prod — never expose env, beans, or heapdump
+        include: health,info
+  endpoint:
+    health:
+      # show-details: always is fine for internal AWS health checks.
+      # If this were public-facing, use "when-authorized" instead.
+      show-details: always
+
+# ─── Validation behaviour ─────────────────────────────────────────────────────
+immunization:
+  validation:
+    # Use env var so this can be changed per-deployment without rebuilding the image.
+    # Defaults to FLEXIBLE if not set.
+    alternate-behavior: ${ALTERNATE_BEHAVIOR:FLEXIBLE}

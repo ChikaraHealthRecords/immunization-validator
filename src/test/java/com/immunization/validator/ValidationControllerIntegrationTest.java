@@ -75,7 +75,7 @@ class ValidationControllerIntegrationTest {
                         .param("state", "MA")
                         .param("age", "5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("test-patient-001"))
+                .andExpect(jsonPath("$.id").value("test-patient-001"))
                 .andExpect(jsonPath("$.valid").value(true));
     }
 
@@ -100,7 +100,7 @@ class ValidationControllerIntegrationTest {
                         .param("age", "5")
                         .param("responseMode", "detailed"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("test-patient-002"))
+                .andExpect(jsonPath("$.id").value("test-patient-002"))
                 .andExpect(jsonPath("$.valid").value(false))
                 .andExpect(jsonPath("$.unmetRequirements").isArray())
                 .andExpect(jsonPath("$.unmetRequirements.length()").value(1));
@@ -125,10 +125,10 @@ class ValidationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patient))
                         .param("state", "MA")
-                        .param("age", "5")
+                        .param("schoolYear", "K-6")
                         .param("responseMode", "detailed"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("sarah-johnson"))
+                .andExpect(jsonPath("$.id").value("sarah-johnson"))
                 .andExpect(jsonPath("$.valid").value(false))
                 .andExpect(jsonPath("$.unmetRequirements").isArray());
     }
@@ -239,7 +239,7 @@ class ValidationControllerIntegrationTest {
                         .param("state", "MA")
                         .param("schoolYear", "preschool"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("test-patient-004"))
+                .andExpect(jsonPath("$.id").value("test-patient-004"))
                 .andExpect(jsonPath("$.valid").value(true));
     }
 
