@@ -1,0 +1,50 @@
+name: Rule correction
+description: Report a rule that gives the wrong result or doesn't match the regulation.
+title: "[Rule] "
+labels: ["rule correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. Getting the rules right matters.
+
+        **Please don't include any real student or patient information.** If you include an example record, use a made-up id and dates.
+  - type: input
+    id: state
+    attributes:
+      label: State
+      placeholder: e.g. MA
+    validations:
+      required: true
+  - type: input
+    id: grade
+    attributes:
+      label: Grade or school-year group
+      placeholder: e.g. Kindergarten, or K-6
+    validations:
+      required: true
+  - type: input
+    id: vaccine
+    attributes:
+      label: Vaccine
+      placeholder: e.g. DTaP
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's wrong?
+      description: What result did you get, and what should it have been?
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: What does the regulation say?
+      description: Quote or link the relevant part of the regulation or health department guidance.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example record (optional)
+      description: A made-up record that shows the problem.
+      render: json

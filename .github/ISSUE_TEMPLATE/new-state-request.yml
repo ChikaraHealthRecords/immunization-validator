@@ -1,0 +1,48 @@
+name: New state request
+description: Ask for a state to be supported. No coding needed, just point us to the rules.
+title: "[New state] "
+labels: ["new state"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping add a state! Tell us where the school immunization requirements are published and we'll turn them into rules.
+
+        **Please don't include any real student or patient information.**
+  - type: input
+    id: state
+    attributes:
+      label: State
+      placeholder: e.g. Rhode Island
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Where are the requirements published?
+      description: Links to the regulation and/or the state health department's school requirements page. Include the citation if you know it (e.g. "105 CMR 220.000").
+    validations:
+      required: true
+  - type: input
+    id: updated
+    attributes:
+      label: When were they last updated?
+      description: The date on the document or page, if shown.
+  - type: textarea
+    id: grades
+    attributes:
+      label: Grades or school levels covered
+      description: e.g. childcare/preschool, kindergarten, 7th grade, college.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else we should know?
+      description: Exemptions the state allows, recent changes, or rules that look unusual.
+  - type: dropdown
+    id: help
+    attributes:
+      label: Would you like to help write the rules?
+      options:
+        - "No, I'm just pointing to the source"
+        - "Yes, I can help check the rules against the regulation"
+        - "Yes, I'd like to open a pull request myself"
