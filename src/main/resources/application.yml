@@ -1,4 +1,3 @@
-
 # ─── Database / JPA / Cache ───────────────────────────────────────────────────
 spring:
   datasource:
@@ -18,6 +17,16 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   cache:
     type: simple
+
+# ─── Actuator ─────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
 
 # ─── Validation behaviour ─────────────────────────────────────────────────────
 immunization:
@@ -428,14 +437,3 @@ immunization:
               - "MEDICAL_CONTRAINDICATION"
               - "RELIGIOUS_EXEMPTION"
               - "SIGNED_WAIVER"
-server:
-  port: 8080
-
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info
-    endpoint:
-      health:
-        show-details: always

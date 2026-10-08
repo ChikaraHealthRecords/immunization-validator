@@ -69,4 +69,13 @@ public class Immunization {
      */
     @JsonProperty("doseNumber")
     private Integer doseNumber;
+
+    /**
+     * Vaccine lot number. When present, indicates a verified/administered dose
+     * rather than a patient-reported one. Used during de-duplication: if two
+     * records share the same vaccineCode and date, the one with a lot number
+     * is preferred.
+     */
+    @JsonProperty("lotNumber")
+    private String lotNumber;
 }

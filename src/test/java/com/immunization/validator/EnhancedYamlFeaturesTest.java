@@ -195,6 +195,7 @@ class EnhancedYamlFeaturesTest {
                                         .alternateVaccineCode("Heplisav-B")
                                         .minDoses(2)
                                         .condition("1st dose on or after 18th birthday")
+                                        .dateConditions(List.of("1st dose on or after 18th birthday"))
                                         .description("Heplisav-B acceptable if ≥18 years")
                                         .build()
                         ))

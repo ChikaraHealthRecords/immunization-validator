@@ -1,0 +1,101 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Page-1" id="2YBvvXClWsGukQMizWep">
+    <mxGraphModel dx="1276" dy="606" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-1" value="SchoolSystem" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-2" value="Controller" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="344" y="20" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-3" value="ValidationService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="590" y="20" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-4" value="RequirementsService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="839" y="20" width="167" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-5" value="Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="20" width="150" height="829" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-6" value="loop" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#B3B3B3;height=20;width=40" vertex="1" parent="1">
+          <mxGeometry x="555" y="311" width="587" height="203" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-7" value="[For each student (parallel)]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="S5tw2AOZb8zg0QPw3e4i-6">
+          <mxGeometry x="40" width="547" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-8" value="POST /validate/batch (100 students)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-1" target="S5tw2AOZb8zg0QPw3e4i-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="266" y="129" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-9" value="validateBatch(patients)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-2" target="S5tw2AOZb8zg0QPw3e4i-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="551" y="183" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-10" value="getRequirements() - ONCE" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-3" target="S5tw2AOZb8zg0QPw3e4i-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="802" y="237" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-11" value="6 requirements" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-4" target="S5tw2AOZb8zg0QPw3e4i-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="805" y="291" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-12" value="CVX lookup" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-3" target="S5tw2AOZb8zg0QPw3e4i-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="906" y="392" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-13" value="vaccine groups" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-5" target="S5tw2AOZb8zg0QPw3e4i-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="909" y="446" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-14" value="Collect all results" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-3" target="S5tw2AOZb8zg0QPw3e4i-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="716" y="558" />
+              <mxPoint x="716" y="588" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-15" value="BatchValidationResponse" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-3" target="S5tw2AOZb8zg0QPw3e4i-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="554" y="642" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-16" value="HTTP 200 OK (100 results)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="S5tw2AOZb8zg0QPw3e4i-2" target="S5tw2AOZb8zg0QPw3e4i-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="269" y="696" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-17" value="Validate + build response" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="565" y="466" width="200" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="S5tw2AOZb8zg0QPw3e4i-18" value="Total: ~3 seconds" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="70" y="716" width="1086" height="48" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

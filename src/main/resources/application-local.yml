@@ -1,0 +1,18 @@
+# ─── LOCAL DEVELOPMENT PROFILE ────────────────────────────────────────────────
+# Active when: mvn spring-boot:run -Dspring-boot.run.profiles=local
+# Purpose: Runs alongside Docker containers without port conflicts
+# ──────────────────────────────────────────────────────────────────────────────
+
+server:
+  port: 8081   # Different from Docker container (8080) — no conflict
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/immunization_db   # localhost because running outside Docker
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: true   # Helpful to see queries during local dev
+    properties:
+      hibernate:
+        format_sql: true
