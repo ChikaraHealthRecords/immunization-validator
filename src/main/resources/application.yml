@@ -437,3 +437,11 @@ immunization:
               - "MEDICAL_CONTRAINDICATION"
               - "RELIGIOUS_EXEMPTION"
               - "SIGNED_WAIVER"
+# ─── LlamaCloud (LlamaExtract) ────────────────────────────────────────────────
+llama:
+  cloud:
+    api-key: ${LLAMA_CLOUD_API_KEY:}
+    project-id: ${LLAMA_CLOUD_PROJECT_ID:}
+    base-url: ${LLAMA_CLOUD_BASE_URL:https://api.cloud.llamaindex.ai}
+    # Interval for the @Scheduled sweep that re-polls non-terminal jobs.
+    poll-interval-ms: 15000

@@ -191,7 +191,7 @@ public class ValidationService {
      * Records without a lot number are never disqualified on their own — only
      * dropped when a duplicate with a lot number exists for the same vaccine+date.
      */
-    private List<Immunization> deduplicateImmunizations(List<Immunization> immunizations) {
+    public List<Immunization> deduplicateImmunizations(List<Immunization> immunizations) {
         if (immunizations == null || immunizations.size() <= 1) {
             return immunizations;
         }

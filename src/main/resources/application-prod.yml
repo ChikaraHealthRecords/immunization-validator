@@ -59,3 +59,13 @@ immunization:
     # Use env var so this can be changed per-deployment without rebuilding the image.
     # Defaults to FLEXIBLE if not set.
     alternate-behavior: ${ALTERNATE_BEHAVIOR:FLEXIBLE}
+# ─── LlamaCloud (LlamaExtract) ────────────────────────────────────────────────
+# LLAMA_CLOUD_API_KEY is injected by ECS from AWS Secrets Manager, same as the
+# DB credentials above. Unlike DB_URL, this is intentionally NOT fail-fast:
+# a blank key just makes document extraction jobs fail cleanly (status FAILED,
+# with an error message) instead of preventing the whole app from starting --
+# /api/v1/validate/* must keep working even if LlamaCloud isn't configured yet.
+llama:
+  cloud:
+    api-key: ${LLAMA_CLOUD_API_KEY:}
+    base-url: ${LLAMA_CLOUD_BASE_URL:https://api.cloud.llamaindex.ai}
