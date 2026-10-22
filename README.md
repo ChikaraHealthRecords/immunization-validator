@@ -181,29 +181,31 @@ POST /api/v1/validate/batch
 
 ### State Requirements
 
-State-specific immunization requirements are configured in `src/main/resources/application.yml` under the `immunization.requirements.states` section.
-
-Example configuration:
+Each state's requirements live in their own file in
+`src/main/resources/rules/states/`, named by state code (`ma.yml` for
+Massachusetts). Every file there is loaded at startup and checked strictly, so
+adding a state means adding a file. The format, and a checklist for adding a
+state, are in [CONTRIBUTING.md](CONTRIBUTING.md#how-state-rules-are-structured).
 
 ```yaml
-immunization:
-  requirements:
-    states:
-      CA:
-        age:
-          - age: 5
-            vaccineCode: "DTaP"
-            minDoses: 5
-            description: "Diphtheria, Tetanus, and Pertussis - 5 doses required by age 5"
-          - age: 5
-            vaccineCode: "MMR"
-            minDoses: 2
-            description: "Measles, Mumps, and Rubella - 2 doses required by age 5"
+state: MA
+name: Massachusetts
+rulesPublished: March 2025
+schoolYear:
+  - schoolYear: "K-6"
+    vaccineCode: "MMR"
+    minDoses: 2
+    description: "MMR - 2 doses; 1st on/after 1st birthday"
+    dateConditions:
+      - "1st dose on or after 1st birthday"
 ```
 
 Requirements can be specified by:
-- **Age**: Requirements for specific ages (in years)
-- **School Year**: Requirements for specific school grades/years
+- **School Year**: requirements for the state's school-year groups (`schoolYear:`)
+- **Age**: requirements for specific ages in years (`age:`)
+
+To load rule files from outside the jar, set `immunization.requirements.location`
+to a resource pattern, for example `file:/etc/validator/rules/*.yml`.
 
 ### Environment Variables
 
