@@ -2,8 +2,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/immunization_db
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -26,7 +26,7 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
 
 # ─── Validation behaviour ─────────────────────────────────────────────────────
 immunization:

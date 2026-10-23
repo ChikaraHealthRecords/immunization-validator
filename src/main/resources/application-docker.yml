@@ -9,7 +9,7 @@ server:
 spring:
   datasource:
     url: jdbc:postgresql://postgres:5432/immunization_db   # 'postgres' = docker-compose service name
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     show-sql: false

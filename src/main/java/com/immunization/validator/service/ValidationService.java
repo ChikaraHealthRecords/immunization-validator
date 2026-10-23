@@ -196,12 +196,16 @@ public class ValidationService {
             return immunizations;
         }
 
-        // Key: vaccineCode + occurrenceDateTime
+        // Key: vaccineCode + calendar day (not the raw text), so "2024-01-10" and
+        // "2024-01-10T09:00:00" count as the same dose.
         Map<String, Immunization> best = new LinkedHashMap<>();
 
         for (Immunization imm : immunizations) {
-            String key = (imm.getVaccineCode() != null ? imm.getVaccineCode() : "") + "|"
-                    + (imm.getOccurrenceDateTime() != null ? imm.getOccurrenceDateTime() : "");
+            LocalDate day = ImmunizationDates.parse(imm.getOccurrenceDateTime());
+            String dayKey = day != null
+                    ? day.toString()
+                    : (imm.getOccurrenceDateTime() != null ? imm.getOccurrenceDateTime() : "");
+            String key = (imm.getVaccineCode() != null ? imm.getVaccineCode() : "") + "|" + dayKey;
 
             Immunization existing = best.get(key);
             if (existing == null) {

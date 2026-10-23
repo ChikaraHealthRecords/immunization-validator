@@ -370,6 +370,28 @@ class ValidationServiceTest {
         assertEquals(1, response.getUnmetRequirements().get(0).getFoundDoses());
     }
 
+    @Test
+    @DisplayName("Same day in different date formats - de-duplication collapses to 1 dose")
+    void testSameDayMixedDateFormats_DeduplicatesToOne() {
+        Patient patient = createPatient("patient-014", "2019-01-01", List.of(
+                createImmunization("DTaP", "2024-01-10"),
+                createImmunization("DTaP", "2024-01-10T09:00:00"),
+                createImmunization("DTaP", "2024-01-10T09:00:00Z")
+        ));
+
+        List<ValidationRequirement> requirements = List.of(
+                createRequirement("DTaP", 3, "DTaP - 3 doses required")
+        );
+        when(requirementsService.getRequirements(anyString(), any(Integer.class)))
+                .thenReturn(requirements);
+
+        ValidationResponse response = validationService.validate(patient, "MA", 5, null, true);
+
+        assertFalse(response.getValid(),
+                "Three records on the same day in different formats should de-dup to 1 dose");
+        assertEquals(1, response.getUnmetRequirements().get(0).getFoundDoses());
+    }
+
     // ========================================
     // HELPER METHODS
     // ========================================

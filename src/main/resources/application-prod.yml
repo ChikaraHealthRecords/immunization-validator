@@ -49,9 +49,9 @@ management:
         include: health,info
   endpoint:
     health:
-      # show-details: always is fine for internal AWS health checks.
-      # If this were public-facing, use "when-authorized" instead.
-      show-details: always
+      # This API is public and unauthenticated, so never expose component details.
+      # "when-authorized" shows nothing unless security is added later.
+      show-details: when-authorized
 
 # ─── Validation behaviour ─────────────────────────────────────────────────────
 immunization:
