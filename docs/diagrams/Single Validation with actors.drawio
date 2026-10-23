@@ -1,0 +1,181 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.7.17 Chrome/128.0.6613.36 Electron/32.0.1 Safari/537.36" version="24.7.17">
+  <diagram name="Page-1" id="2YBvvXClWsGukQMizWep">
+    <mxGraphModel dx="2126" dy="606" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="aNhweRHfC5fP3oGXFyck-1" value="Parent/Guardian" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};participant=umlActor;verticalAlign=bottom;labelPosition=center;verticalLabelPosition=top;align=center;size=65;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="35" height="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-2" value="SchoolPortal" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="346" y="20" width="150" height="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-3" value="ValidationController" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="827" y="20" width="162" height="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-4" value="ValidationService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1153" y="20" width="150" height="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-5" value="RequirementsService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1472" y="20" width="167" height="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-6" value="VaccineLookupService" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1689" y="20" width="176" height="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-7" value="PostgreSQL Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="2143" y="20" width="171" height="1555" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-8" value="loop" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#B3B3B3;height=20;width=40" vertex="1" parent="1">
+          <mxGeometry x="1105" y="817" width="249" height="329" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-9" value="[Per requirement]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="aNhweRHfC5fP3oGXFyck-8">
+          <mxGeometry x="40" width="209" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-10" value="" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#B3B3B3;height=20;width=0" vertex="1" parent="1">
+          <mxGeometry x="971" y="257" width="1293" height="1013" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-11" value="" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="aNhweRHfC5fP3oGXFyck-10">
+          <mxGeometry width="1293" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-12" value="Upload vaccine card" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-1" target="aNhweRHfC5fP3oGXFyck-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="267" y="129" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-13" value="POST /api/v1/validate/single&#xa;(patient, state, schoolType)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-2" target="aNhweRHfC5fP3oGXFyck-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="673" y="183" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-14" value="validate(patient, &quot;MA&quot;, &quot;preschool&quot;)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-3" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1077" y="237" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-15" value="getRequirements(&quot;MA&quot;, &quot;preschool&quot;)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1400" y="359" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-16" value="List&lt;VaccineRequirement&gt;" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-5" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1403" y="413" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-17" value="translateCvxCodes(immunizations)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1511" y="467" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-18" value="SELECT vaccine_group_name&#xa;WHERE cvx_code IN (...)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-6" target="aNhweRHfC5fP3oGXFyck-7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2011" y="521" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-19" value="[&quot;DTaP&quot;, &quot;HepB&quot;, &quot;POLIO&quot;]" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-7" target="aNhweRHfC5fP3oGXFyck-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2014" y="575" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-20" value="Expanded immunizations" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-6" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1514" y="629" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-21" value="normalizeVaccineName()&#xa;DTaP -&gt; DTaP" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1279" y="683" />
+              <mxPoint x="1279" y="713" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-22" value="Dose counting&#xa;[&quot;DTaP&quot;:5, &quot;HepB&quot;:3, &quot;Polio&quot;:3]" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1279" y="767" />
+              <mxPoint x="1279" y="797" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-23" value="Check exemptions" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1279" y="898" />
+              <mxPoint x="1279" y="928" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-24" value="Check intervals" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1279" y="982" />
+              <mxPoint x="1279" y="1012" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-25" value="Validate date/interval conditions" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1279" y="1066" />
+              <mxPoint x="1279" y="1096" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-26" value="Create ValidationResponse&#xa;status: INVALID&#xa;unmetRequirements: [...]" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1279" y="1190" />
+              <mxPoint x="1279" y="1220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-27" value="ValidationResponse" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-4" target="aNhweRHfC5fP3oGXFyck-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1080" y="1314" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-28" value="HTTP 200 OK&#xa;{&quot;status&quot;:&quot;invalid&quot;,&quot;unmetRequirements&quot;:[...]}" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-3" target="aNhweRHfC5fP3oGXFyck-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="676" y="1368" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-29" value="Missing DTaP dose 4, MMR, Varicella" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="aNhweRHfC5fP3oGXFyck-2" target="aNhweRHfC5fP3oGXFyck-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="270" y="1422" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-30" value="VALIDATION PROCESS" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="1203" y="277" width="1051" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="aNhweRHfC5fP3oGXFyck-31" value="Response time: ~100ms" style="fillColor=#ffff88;strokeColor=#9E916F;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1442" width="2184" height="48" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
