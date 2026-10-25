@@ -1,10 +1,9 @@
-
 # ─── Database / JPA / Cache ───────────────────────────────────────────────────
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/immunization_db
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -19,6 +18,16 @@ spring:
   cache:
     type: simple
 
+# ─── Actuator ─────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
 # ─── Validation behaviour ─────────────────────────────────────────────────────
 immunization:
   validation:
@@ -31,15 +40,3 @@ immunization:
   # somewhere else, set a resource pattern here, e.g.
   #   requirements:
   #     location: file:/etc/validator/rules/*.yml
-
-server:
-  port: 8080
-
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info
-    endpoint:
-      health:
-        show-details: always

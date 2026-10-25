@@ -138,16 +138,16 @@ class DateConditionEvaluatorTest {
     }
 
     @Test
-    void testEmptyCondition_Satisfied() {
+    void testEmptyCondition_Undetermined() {
         List<Immunization> imms = List.of(createImmunization("2020-12-10"));
-        assertEquals(ValidationResult.SATISFIED,
+        assertEquals(ValidationResult.UNDETERMINED,
                 evaluator.evaluateCondition("", imms, birthDate));
     }
 
     @Test
-    void testNullCondition_Satisfied() {
+    void testNullCondition_Undetermined() {
         List<Immunization> imms = List.of(createImmunization("2020-12-10"));
-        assertEquals(ValidationResult.SATISFIED,
+        assertEquals(ValidationResult.UNDETERMINED,
                 evaluator.evaluateCondition(null, imms, birthDate));
     }
 

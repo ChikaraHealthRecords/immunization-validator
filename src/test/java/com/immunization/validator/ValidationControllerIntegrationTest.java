@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 2026-01-15
  */
 @SpringBootTest
+@ActiveProfiles("local")   // DB credentials no longer have defaults in the base config
 @AutoConfigureMockMvc
 @DisplayName("ValidationController Integration Tests")
 class ValidationControllerIntegrationTest {
@@ -75,7 +77,7 @@ class ValidationControllerIntegrationTest {
                         .param("state", "MA")
                         .param("age", "5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("test-patient-001"))
+                .andExpect(jsonPath("$.id").value("test-patient-001"))
                 .andExpect(jsonPath("$.valid").value(true));
     }
 
@@ -100,7 +102,7 @@ class ValidationControllerIntegrationTest {
                         .param("age", "5")
                         .param("responseMode", "detailed"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("test-patient-002"))
+                .andExpect(jsonPath("$.id").value("test-patient-002"))
                 .andExpect(jsonPath("$.valid").value(false))
                 .andExpect(jsonPath("$.unmetRequirements").isArray())
                 .andExpect(jsonPath("$.unmetRequirements.length()").value(1));
@@ -125,10 +127,10 @@ class ValidationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(patient))
                         .param("state", "MA")
-                        .param("age", "5")
+                        .param("schoolYear", "K-6")
                         .param("responseMode", "detailed"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("sarah-johnson"))
+                .andExpect(jsonPath("$.id").value("sarah-johnson"))
                 .andExpect(jsonPath("$.valid").value(false))
                 .andExpect(jsonPath("$.unmetRequirements").isArray());
     }
@@ -239,7 +241,7 @@ class ValidationControllerIntegrationTest {
                         .param("state", "MA")
                         .param("schoolYear", "preschool"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.patientId").value("test-patient-004"))
+                .andExpect(jsonPath("$.id").value("test-patient-004"))
                 .andExpect(jsonPath("$.valid").value(true));
     }
 

@@ -121,3 +121,7 @@ secrets/
 # Docker environment
 postgres_data/
 pgadmin_data/
+
+# draw.io editor lock and backup files
+*.dtmp
+*.bkp

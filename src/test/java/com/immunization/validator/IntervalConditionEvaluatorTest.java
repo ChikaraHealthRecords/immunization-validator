@@ -111,35 +111,35 @@ class IntervalConditionEvaluatorTest {
     }
 
     @Test
-    void testOnlyOneDose_Satisfied() {
+    void testOnlyOneDose_NotSatisfied() {
         List<Immunization> imms = List.of(create("2024-01-01"));
-        assertEquals(ValidationResult.SATISFIED,
+        assertEquals(ValidationResult.NOT_SATISFIED,
                 evaluator.evaluateCondition("at least 28 days between doses", imms));
     }
 
     @Test
-    void testEmptyList_Satisfied() {
-        assertEquals(ValidationResult.SATISFIED,
+    void testEmptyList_NotSatisfied() {
+        assertEquals(ValidationResult.NOT_SATISFIED,
                 evaluator.evaluateCondition("at least 28 days between doses", List.of()));
     }
 
     @Test
-    void testNullList_Satisfied() {
-        assertEquals(ValidationResult.SATISFIED,
+    void testNullList_NotSatisfied() {
+        assertEquals(ValidationResult.NOT_SATISFIED,
                 evaluator.evaluateCondition("at least 28 days between doses", null));
     }
 
     @Test
-    void testEmptyCondition_Satisfied() {
+    void testEmptyCondition_Undetermined() {
         List<Immunization> imms = List.of(create("2024-01-01"));
-        assertEquals(ValidationResult.SATISFIED,
+        assertEquals(ValidationResult.UNDETERMINED,
                 evaluator.evaluateCondition("", imms));
     }
 
     @Test
-    void testNullCondition_Satisfied() {
+    void testNullCondition_Undetermined() {
         List<Immunization> imms = List.of(create("2024-01-01"));
-        assertEquals(ValidationResult.SATISFIED,
+        assertEquals(ValidationResult.UNDETERMINED,
                 evaluator.evaluateCondition(null, imms));
     }
 
