@@ -95,6 +95,12 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
+
+        <!-- Reads the per-state rule files in rules/states/*.yml (StateRulesLoader) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
         
         <!-- Lombok for reducing boilerplate -->
         <dependency>

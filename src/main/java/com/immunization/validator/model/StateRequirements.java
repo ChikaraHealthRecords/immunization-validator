@@ -38,6 +38,15 @@ public class StateRequirements {
      */
     private String name;
 
+    /** Who publishes the rules, e.g. "MA DPH – Immunization Division". */
+    private String source;
+
+    /** Legal citation, e.g. "105 CMR 220.000". */
+    private String authority;
+
+    /** When the state published these rules, e.g. "March 2025". */
+    private String rulesPublished;
+
     /**
      * Map of age groups (in years) to their required immunizations.
      *

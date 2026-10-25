@@ -4,9 +4,8 @@ import com.immunization.validator.model.AlternateRequirement;
 import com.immunization.validator.model.StateRequirements;
 import com.immunization.validator.model.ValidationRequirement;
 import com.immunization.validator.service.RequirementsService;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,68 +13,69 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Configuration class for loading immunization requirements by state.
- * Requirements are loaded from application properties or external configuration files.
+ * Loads immunization requirements, one rule file per state, and exposes them
+ * as the {@link RequirementsService} bean.
+ *
+ * Files live in {@code src/main/resources/rules/states/} (e.g. {@code ma.yml}).
+ * Set {@code immunization.requirements.location} to load them from elsewhere,
+ * e.g. {@code file:/etc/validator/rules/*.yml}.
  */
-@Data
 @Slf4j
 @Configuration
-@ConfigurationProperties(prefix = "immunization.requirements")
 public class RequirementsConfiguration {
 
-    /**
-     * Map of state codes to their requirements configuration
-     */
-    private Map<String, Map<String, List<RequirementConfig>>> states = new HashMap<>();
+    @Value("${immunization.requirements.location:" + StateRulesLoader.DEFAULT_LOCATION + "}")
+    private String location;
 
-    /**
-     * Creates a service bean for accessing requirements.
-     * This maps the configuration structure to our StateRequirements model.
-     */
     @Bean
     public RequirementsService requirementsService() {
         Map<String, StateRequirements> requirementsMap = new HashMap<>();
+        new StateRulesLoader().load(location).forEach((stateCode, file) ->
+                requirementsMap.put(stateCode, toStateRequirements(file)));
 
-        for (Map.Entry<String, Map<String, List<RequirementConfig>>> stateEntry : states.entrySet()) {
-            String stateCode = stateEntry.getKey();
-            Map<String, List<RequirementConfig>> stateConfig = stateEntry.getValue();
-
-            StateRequirements stateRequirements = StateRequirements.builder()
-                    .stateCode(stateCode)
-                    .requirementsByAge(new HashMap<>())
-                    .requirementsBySchoolYear(new HashMap<>())
-                    .build();
-
-            // Process age-based requirements
-            if (stateConfig.containsKey("age")) {
-                Map<Integer, List<ValidationRequirement>> requirementsByAge = new HashMap<>();
-                for (RequirementConfig config : stateConfig.get("age")) {
-                    int age = config.getAge();
-                    requirementsByAge.putIfAbsent(age, new ArrayList<>());
-                    requirementsByAge.get(age).add(mapToValidationRequirement(config));
-                }
-                stateRequirements.setRequirementsByAge(requirementsByAge);
-            }
-
-            // Process school year-based requirements
-            if (stateConfig.containsKey("schoolYear")) {
-                Map<String, List<ValidationRequirement>> requirementsBySchoolYear = new HashMap<>();
-                for (RequirementConfig config : stateConfig.get("schoolYear")) {
-                    String schoolYear = config.getSchoolYear();
-                    requirementsBySchoolYear.putIfAbsent(schoolYear, new ArrayList<>());
-                    requirementsBySchoolYear.get(schoolYear).add(mapToValidationRequirement(config));
-                }
-                stateRequirements.setRequirementsBySchoolYear(requirementsBySchoolYear);
-            }
-
-            requirementsMap.put(stateCode, stateRequirements);
-        }
-
-        log.info("Loaded immunization requirements for {} states", requirementsMap.size());
+        log.info("Loaded immunization requirements for {} states: {}", requirementsMap.size(), requirementsMap.keySet());
         return new RequirementsService(requirementsMap);
     }
 
-    private ValidationRequirement mapToValidationRequirement(RequirementConfig config) {
+    /** Builds the model the validator uses from one state's rule file. */
+    static StateRequirements toStateRequirements(StateRuleFile file) {
+        StateRequirements stateRequirements = StateRequirements.builder()
+                .stateCode(file.getState())
+                .name(file.getName())
+                .source(file.getSource())
+                .authority(file.getAuthority())
+                .rulesPublished(file.getRulesPublished())
+                .notes(file.getNotes())
+                .requirementsByAge(new HashMap<>())
+                .requirementsBySchoolYear(new HashMap<>())
+                .build();
+
+        // Process age-based requirements
+        if (file.getAge() != null) {
+            Map<Integer, List<ValidationRequirement>> requirementsByAge = new HashMap<>();
+            for (RequirementConfig config : file.getAge()) {
+                int age = config.getAge();
+                requirementsByAge.putIfAbsent(age, new ArrayList<>());
+                requirementsByAge.get(age).add(mapToValidationRequirement(config));
+            }
+            stateRequirements.setRequirementsByAge(requirementsByAge);
+        }
+
+        // Process school year-based requirements
+        if (file.getSchoolYear() != null) {
+            Map<String, List<ValidationRequirement>> requirementsBySchoolYear = new HashMap<>();
+            for (RequirementConfig config : file.getSchoolYear()) {
+                String schoolYear = config.getSchoolYear();
+                requirementsBySchoolYear.putIfAbsent(schoolYear, new ArrayList<>());
+                requirementsBySchoolYear.get(schoolYear).add(mapToValidationRequirement(config));
+            }
+            stateRequirements.setRequirementsBySchoolYear(requirementsBySchoolYear);
+        }
+
+        return stateRequirements;
+    }
+
+    private static ValidationRequirement mapToValidationRequirement(RequirementConfig config) {
         List<AlternateRequirement> alternateRequirements = null;
         if (config.getAlternateRequirements() != null && !config.getAlternateRequirements().isEmpty()) {
             alternateRequirements = config.getAlternateRequirements().stream()
@@ -105,16 +105,8 @@ public class RequirementsConfiguration {
                 .build();
     }
 
-    public Map<String, Map<String, List<RequirementConfig>>> getStates() {
-        return states;
-    }
-
-    public void setStates(Map<String, Map<String, List<RequirementConfig>>> states) {
-        this.states = states;
-    }
-
     /**
-     * Internal configuration class for loading from properties
+     * One requirement in a state rule file (an entry under schoolYear or age).
      */
     public static class RequirementConfig {
         private String vaccineCode;
@@ -173,7 +165,7 @@ public class RequirementsConfiguration {
     }
 
     /**
-     * Internal configuration class for alternate requirements
+     * Another way to meet a requirement (an entry under alternateRequirements).
      */
     public static class AlternateRequirementConfig {
         private String alternateVaccineCode;

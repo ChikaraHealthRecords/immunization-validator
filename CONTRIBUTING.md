@@ -19,34 +19,49 @@ data. Use made-up identifiers and dates.
 
 ## How state rules are structured
 
-All rules live in [`src/main/resources/application.yml`](src/main/resources/application.yml)
-under `immunization.requirements.states`. Each state is keyed by its
-two-letter code and lists requirements by school-year group:
+Each state has its own file in
+[`src/main/resources/rules/states/`](src/main/resources/rules/states/), named
+by its two-letter code in lower case: Massachusetts is
+[`ma.yml`](src/main/resources/rules/states/ma.yml). Every file in that folder
+is loaded at startup, so adding a state means adding a file; nothing else needs
+to list it.
 
 ```yaml
-immunization:
-  requirements:
-    states:
-      MA:
-        schoolYear:
-          - schoolYear: "K-6"          # the group this rule applies to
-            vaccineCode: "DTaP"        # which vaccine (case-sensitive)
-            minDoses: 5                # doses needed by default
-            description: "DTaP - 5 doses required; 4 doses acceptable if 4th given on or after 4th birthday"
-            dateConditions:            # optional: age at a given dose
-              - "1st dose on or after 1st birthday"
-            intervalConditions:        # optional: spacing between doses
-              - "at least 28 days between doses"
-            alternateRequirements:     # optional: other ways to meet the rule
-              - minDoses: 4
-                description: "4 doses acceptable if 4th dose given on or after 4th birthday"
-                dateConditions:
-                  - "4th dose on or after 4th birthday"
-            acceptedExceptions:        # exceptions that count as meeting the rule
-              - "MEDICAL_CONTRAINDICATION"
-              - "RELIGIOUS_EXEMPTION"
-            notes: "Anything a reviewer should know"
+state: MA                            # must match the file name (ma.yml)
+name: Massachusetts
+source: MA DPH – Immunization Division
+authority: 105 CMR 220.000           # the legal citation
+rulesPublished: March 2025           # the date on the state's own document
+
+schoolYear:
+  - schoolYear: "K-6"                # the group this rule applies to
+    vaccineCode: "DTaP"              # which vaccine (case-sensitive)
+    minDoses: 5                      # doses needed by default
+    description: "DTaP - 5 doses required; 4 doses acceptable if 4th given on or after 4th birthday"
+    dateConditions:                  # optional: age at a given dose
+      - "1st dose on or after 1st birthday"
+    intervalConditions:              # optional: spacing between doses
+      - "at least 28 days between doses"
+    alternateRequirements:           # optional: other ways to meet the rule
+      - minDoses: 4
+        description: "4 doses acceptable if 4th dose given on or after 4th birthday"
+        dateConditions:
+          - "4th dose on or after 4th birthday"
+    acceptedExceptions:              # exceptions that count as meeting the rule
+      - "MEDICAL_CONTRAINDICATION"
+      - "RELIGIOUS_EXEMPTION"
+    notes: "Anything a reviewer should know"
 ```
+
+`state`, `name` and `rulesPublished` are required; `source`, `authority` and
+`notes` are optional. Requirements go under `schoolYear` (by the state's
+school-year groups) or `age` (by age in years, with `age:` on each entry).
+
+Files are checked strictly when the service starts. A misspelt key (such as
+`minDose`), a file name that doesn't match `state`, a state defined twice or a
+missing required field stops startup with the file name, the problem and,
+where possible, the line number, instead of letting a rule silently do
+nothing. `mvn test` checks every rule file the same way.
 
 A requirement is met when **any** of these is true:
 
@@ -98,10 +113,10 @@ add it and explain where it comes from in the regulation.
 
 1. Find the current regulation and the state health department's published
    requirements. Note the citation and the date the state published them.
-2. Add a block for the state in `application.yml`, with a comment at the top
-   giving the source, citation and publication date (see the Massachusetts
-   block). The website shows results as "from rules published <date>", so this
-   date matters.
+2. Copy `rules/states/ma.yml` to `rules/states/<code>.yml` (for example
+   `ri.yml`) and replace its contents. Fill in `source`, `authority` and
+   `rulesPublished`; the website shows results as "from rules published
+   <date>", so that date matters.
 3. Add tests for each school-year group, including at least one record that
    meets the rules and one that doesn't. Edge cases (a dose given exactly on a
    birthday) are especially useful. See [`ValidationServiceTest.java`](src/test/java/com/immunization/validator/ValidationServiceTest.java).
