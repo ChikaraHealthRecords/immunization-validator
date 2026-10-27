@@ -11,8 +11,15 @@ spring:
     url: jdbc:postgresql://localhost:5432/immunization_db   # localhost because running outside Docker
     username: postgres
     password: postgres
+  autoconfigure:
+    exclude: []   # switch the datasource/JPA auto-configuration back on
   jpa:
     show-sql: true   # Helpful to see queries during local dev
     properties:
       hibernate:
         format_sql: true
+
+# ─── Vaccine data from the database (default is the CSV file, no database) ────
+immunization:
+  vaccines:
+    source: database

@@ -2,7 +2,6 @@ package com.immunization.validator;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * Main application class for the Immunization Validator Service.
@@ -11,7 +10,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * without requiring authentication or storing personally identifiable information.
  */
 @SpringBootApplication
-@EnableJpaRepositories("com.immunization.validator.repository")
 public class ImmunizationValidatorApplication {
 
     public static void main(String[] args) {

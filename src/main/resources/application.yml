@@ -18,6 +18,16 @@ spring:
   cache:
     type: simple
 
+  # Default mode needs no database: vaccine data comes from vaccines/vaccines.csv.
+  # The datasource and JPA auto-configuration is switched off here and switched back on
+  # by the local, docker and prod profiles (they set immunization.vaccines.source=database).
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
+
 # ─── Actuator ─────────────────────────────────────────────────────────────────
 management:
   endpoints:

@@ -40,6 +40,9 @@ spring:
   cache:
     type: simple
 
+  autoconfigure:
+    exclude: []   # switch the datasource/JPA auto-configuration back on
+
 # ─── Actuator ────────────────────────────────────────────────────────────────
 management:
   endpoints:
@@ -55,6 +58,8 @@ management:
 
 # ─── Validation behaviour ─────────────────────────────────────────────────────
 immunization:
+  vaccines:
+    source: database   # prod keeps reading the vaccines table until file mode is proven
   validation:
     # Use env var so this can be changed per-deployment without rebuilding the image.
     # Defaults to FLEXIBLE if not set.
