@@ -1,7 +1,7 @@
 package com.immunization.validator.controller;
 
 import com.immunization.validator.model.Vaccine;
-import com.immunization.validator.repository.VaccineRepository;
+import com.immunization.validator.service.VaccineCatalog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VaccineController {
 
-    private final VaccineRepository vaccineRepository;
+    private final VaccineCatalog vaccineCatalog;
 
     /**
      * Get all vaccines for a specific CVX code.
@@ -49,7 +49,7 @@ public class VaccineController {
     @GetMapping("/cvx/{cvxCode}")
     public ResponseEntity<List<Vaccine>> getVaccinesByCvxCode(@PathVariable Integer cvxCode) {
         log.info("Looking up CVX code: {}", cvxCode);
-        List<Vaccine> vaccines = vaccineRepository.findByCvxCode(cvxCode);
+        List<Vaccine> vaccines = vaccineCatalog.findByCvxCode(cvxCode);
 
         if (vaccines.isEmpty()) {
             log.warn("No vaccines found for CVX code: {}", cvxCode);
@@ -76,7 +76,7 @@ public class VaccineController {
     @GetMapping("/group/{groupName}")
     public ResponseEntity<List<Vaccine>> getVaccinesByGroup(@PathVariable String groupName) {
         log.info("Looking up vaccine group: {}", groupName);
-        List<Vaccine> vaccines = vaccineRepository.findByVaccineGroupNameIgnoreCase(groupName);
+        List<Vaccine> vaccines = vaccineCatalog.findByGroupName(groupName);
 
         if (vaccines.isEmpty()) {
             log.warn("No vaccines found for group: {}", groupName);
@@ -101,7 +101,7 @@ public class VaccineController {
     @GetMapping
     public ResponseEntity<List<Vaccine>> getAllVaccines() {
         log.info("Fetching all vaccines");
-        List<Vaccine> vaccines = vaccineRepository.findAll();
+        List<Vaccine> vaccines = vaccineCatalog.findAll();
         log.info("Returning {} vaccines", vaccines.size());
         return ResponseEntity.ok(vaccines);
     }
@@ -121,7 +121,7 @@ public class VaccineController {
     public ResponseEntity<Map<String, Object>> getVaccineStats() {
         log.info("Generating vaccine statistics");
 
-        List<Vaccine> allVaccines = vaccineRepository.findAll();
+        List<Vaccine> allVaccines = vaccineCatalog.findAll();
 
         // Count unique CVX codes
         long uniqueCvxCodes = allVaccines.stream()
@@ -181,7 +181,7 @@ public class VaccineController {
     public ResponseEntity<List<Vaccine>> searchVaccines(@RequestParam String q) {
         log.info("Searching vaccines with query: {}", q);
 
-        List<Vaccine> results = vaccineRepository.findAll().stream()
+        List<Vaccine> results = vaccineCatalog.findAll().stream()
                 .filter(v -> v.getShortDesc().toLowerCase().contains(q.toLowerCase()) ||
                         v.getVaccineGroupName().toLowerCase().contains(q.toLowerCase()))
                 .collect(Collectors.toList());

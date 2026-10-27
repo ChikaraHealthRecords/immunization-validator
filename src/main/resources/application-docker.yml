@@ -11,5 +11,12 @@ spring:
     url: jdbc:postgresql://postgres:5432/immunization_db   # 'postgres' = docker-compose service name
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  autoconfigure:
+    exclude: []   # switch the datasource/JPA auto-configuration back on
   jpa:
     show-sql: false
+
+# ─── Vaccine data from the database (default is the CSV file, no database) ────
+immunization:
+  vaccines:
+    source: database

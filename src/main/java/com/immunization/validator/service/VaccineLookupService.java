@@ -1,7 +1,6 @@
 package com.immunization.validator.service;
 
 import com.immunization.validator.model.Vaccine;
-import com.immunization.validator.repository.VaccineRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class VaccineLookupService {
 
-    private final VaccineRepository vaccineRepository;
+    private final VaccineCatalog vaccineCatalog;
 
     /**
      * Look up vaccine group names for a given CVX code
@@ -27,7 +26,7 @@ public class VaccineLookupService {
             return List.of();
         }
 
-        List<Vaccine> vaccines = vaccineRepository.findByCvxCode(cvxCode);
+        List<Vaccine> vaccines = vaccineCatalog.findByCvxCode(cvxCode);
         
         if (vaccines.isEmpty()) {
             log.warn("No vaccine groups found for CVX code: {}", cvxCode);
