@@ -38,7 +38,7 @@ public class RequirementsConfiguration {
     }
 
     /** Builds the model the validator uses from one state's rule file. */
-    static StateRequirements toStateRequirements(StateRuleFile file) {
+    public static StateRequirements toStateRequirements(StateRuleFile file) {
         StateRequirements stateRequirements = StateRequirements.builder()
                 .stateCode(file.getState())
                 .name(file.getName())

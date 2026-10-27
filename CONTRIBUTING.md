@@ -83,8 +83,25 @@ group covers, so the maintainers can add the state to the
 
 Use the existing names so doses given as CDC CVX codes map correctly:
 `DTaP`, `Tdap`, `Polio`, `HepB`, `Hib`, `MMR`, `Varicella`, `MenACWY`.
-CVX-to-vaccine mappings are in
-[`database/init-scripts/vaccines.sql`](database/init-scripts/vaccines.sql).
+CVX codes map to CDC vaccine groups in
+[`src/main/resources/vaccines/vaccines.csv`](src/main/resources/vaccines/vaccines.csv)
+(and the matching [`database/init-scripts/vaccines.sql`](database/init-scripts/vaccines.sql)
+for database mode).
+
+A few CDC groups are broader than school requirements, so some codes are
+handled individually in
+[`CvxGroupRules`](src/main/java/com/immunization/validator/service/CvxGroupRules.java):
+
+- **MenACWY:** CDC's `MENING` group also contains vaccines that don't meet a
+  MenACWY requirement. Only CVX 108, 114, 136, 147, 203, 316 and 328 count;
+  32 (MPSV4), 103 (MenC) and 148 (Hib-MenCY) don't.
+- **Pediatric DT (CVX 28):** CDC groups it with DTaP, but it has no pertussis
+  component. If a DTaP requirement is met only by counting DT, the result is
+  "needs review", explaining that DT counts only with a documented medical
+  contraindication to pertussis vaccine.
+
+A CVX code that isn't in the vaccine list is skipped with a warning; it
+doesn't fail the rest of the record.
 
 ### Condition phrases
 
