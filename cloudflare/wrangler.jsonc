@@ -1,0 +1,46 @@
+// Demo deployment: validator-api.chikarahealthrecords.info on Cloudflare
+// Containers. Deployed by .github/workflows/demo.yml on every push to main.
+// Production will run on AWS (see .github/workflows/backend.yml).
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "immunization-validator-api-demo",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-29",
+
+  "routes": [
+    { "pattern": "validator-api.chikarahealthrecords.info", "custom_domain": true }
+  ],
+
+  "containers": [
+    {
+      "class_name": "ValidatorApi",
+      "image": "../Dockerfile",
+      "image_build_context": "..",
+      // 1/2 vCPU, 4 GiB. "basic" (1/4 vCPU, 1 GiB) is too small for the JVM.
+      "instance_type": "standard-1",
+      // One instance serves traffic; the second allows rolling deploys.
+      "max_instances": 2
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [{ "name": "VALIDATOR_API", "class_name": "ValidatorApi" }]
+  },
+  "exports": {
+    "ValidatorApi": { "type": "durable-object", "storage": "sqlite" }
+  },
+
+  "vars": {
+    // The website that may call this API from a browser.
+    "ALLOWED_ORIGIN": "https://validator.chikarahealthrecords.info"
+  },
+
+  // Keep warm on weekdays, 11:00-23:59 UTC (about 7am-8pm US Eastern).
+  // Outside these hours the container sleeps after 15 idle minutes and the
+  // first request waits for Spring Boot to start.
+  "triggers": {
+    "crons": ["*/5 11-23 * * 1-5"]
+  },
+
+  "observability": { "enabled": true }
+}

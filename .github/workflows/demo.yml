@@ -1,0 +1,77 @@
+# Tests on every pull request; on main, also deploys the demo API to
+# validator-api.chikarahealthrecords.info on Cloudflare Containers.
+#
+# Needs these repository secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN    token that can deploy Workers and Containers
+#   CLOUDFLARE_ACCOUNT_ID   the Cloudflare account
+name: Tests and demo deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      # No database needed: vaccine data comes from vaccines.csv.
+      - name: Run tests
+        run: mvn -B test
+
+  deploy-demo:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: demo
+    # One deploy at a time; a newer push waits rather than cancelling a deploy.
+    concurrency:
+      group: demo-deploy
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: cloudflare
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+
+      - name: Install wrangler
+        run: npm ci
+
+      # Builds the Docker image (Docker is preinstalled on ubuntu-latest),
+      # pushes it to Cloudflare and rolls out the Worker and container.
+      - name: Deploy
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # A new container can take a few minutes to become reachable, and Spring
+      # Boot then needs a moment to start. Wait up to 10 minutes.
+      - name: Check the demo API is up
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS --max-time 30 https://validator-api.chikarahealthrecords.info/actuator/health | grep -q '"UP"'; then
+              echo "Demo API is up"; exit 0
+            fi
+            echo "Not up yet (attempt $i)"; sleep 15
+          done
+          echo "Demo API did not come up"; exit 1
