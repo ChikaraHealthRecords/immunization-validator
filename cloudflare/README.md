@@ -13,9 +13,8 @@ for the demo website. Production will run on AWS
   `IMMUNIZATION_CORS_ALLOWED_ORIGINS`, so only the demo website can call it
   from a browser.
 - Instance type `standard-1` (1/2 vCPU, 4 GiB). The container sleeps after 15
-  idle minutes; a cron ping keeps it warm on weekdays, about 7am–8pm US
-  Eastern. Outside those hours the first request waits for Spring Boot to
-  start (roughly 10–20 seconds).
+  idle minutes, and the next request waits for Spring Boot to start (roughly
+  10–20 seconds).
 
 ## Deploying
 `.github/workflows/demo.yml` runs the tests on every pull request and, on
@@ -32,5 +31,8 @@ npx wrangler deploy
 
 ## Costs
 Containers bill for memory and disk while the container is awake, and for CPU
-only while it's busy. The keep-warm hours are the main cost lever; change or
-remove `triggers.crons` in `wrangler.jsonc` to adjust them.
+only while it's busy, so a sleeping container costs almost nothing.
+
+To avoid cold starts during demos, turn on the keep-warm ping by adding the
+cron trigger shown in `wrangler.jsonc`. It costs roughly $10 a month for
+weekday business hours, mostly memory.

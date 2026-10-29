@@ -8,7 +8,7 @@ import { Container, getContainer } from '@cloudflare/containers'
 
 export class ValidatorApi extends Container {
   defaultPort = 8080 // requests wait until Spring Boot is listening here
-  sleepAfter = '15m' // stop after 15 idle minutes (see the keep-warm cron)
+  sleepAfter = '15m' // stop after 15 idle minutes
   enableInternet = false // the API makes no outbound calls
 
   constructor (ctx, env) {
@@ -30,9 +30,9 @@ export default {
     return api(env).fetch(request)
   },
 
-  // Keep-warm ping (wrangler.jsonc "triggers"): Spring Boot takes a while to
-  // start, so during demo hours a request every few minutes stops the
-  // container from going to sleep.
+  // Keep-warm ping, off until a cron trigger is added in wrangler.jsonc.
+  // Spring Boot takes a while to start, so a request every few minutes stops
+  // the container from going to sleep.
   async scheduled (controller, env, ctx) {
     ctx.waitUntil(api(env).fetch(new Request('http://validator-api/actuator/health')))
   }

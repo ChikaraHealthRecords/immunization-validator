@@ -35,12 +35,10 @@
     "ALLOWED_ORIGIN": "https://validator.chikarahealthrecords.info"
   },
 
-  // Keep warm on weekdays, 11:00-23:59 UTC (about 7am-8pm US Eastern).
-  // Outside these hours the container sleeps after 15 idle minutes and the
-  // first request waits for Spring Boot to start.
-  "triggers": {
-    "crons": ["*/5 11-23 * * 1-5"]
-  },
+  // Keep-warm is off: the container sleeps after 15 idle minutes and the next
+  // request waits for Spring Boot to start. To keep it warm on weekdays,
+  // 11:00-23:59 UTC (about 7am-8pm US Eastern), add:
+  //   "triggers": { "crons": ["*/5 11-23 * * 1-5"] },
 
   "observability": { "enabled": true }
 }
