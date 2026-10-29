@@ -1,0 +1,15 @@
+{
+  "name": "immunization-validator-api-demo",
+  "private": true,
+  "description": "Demo deployment of the validator API on Cloudflare Containers",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "^0.3.7"
+  },
+  "devDependencies": {
+    "wrangler": "^4.155.0"
+  }
+}

@@ -1,19 +1,13 @@
-# ─── BACKEND CI/CD PIPELINE ──────────────────────────────────────────────────
-# Trigger: any push to main branch that touches backend-relevant files.
+# ─── BACKEND CI/CD PIPELINE (AWS PRODUCTION, NOT IN USE YET) ─────────────────
 # Flow: Run tests → Build JAR → Build Docker image → Push to ECR → Deploy to ECS
+#
+# Manual only until the AWS production environment exists (ECR, ECS, load
+# balancer, credentials). Tests and the demo deploy run in demo.yml.
 # ─────────────────────────────────────────────────────────────────────────────
-name: Backend CI/CD
+name: Backend CI/CD (AWS production)
 
 on:
-  push:
-    branches:
-      - main   # Only run on main — not on feature branches
-    paths:
-      # Only trigger if these files actually changed.
-      # A docs-only commit won't waste 10 minutes rebuilding the backend.
-      - 'src/**'
-      - 'pom.xml'
-      - 'Dockerfile'
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
