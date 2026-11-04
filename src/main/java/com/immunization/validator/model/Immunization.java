@@ -59,7 +59,7 @@ public class Immunization {
      * Date when the immunization was administered
      * Format: YYYY-MM-DD
      */
-    @NotBlank(message = "Administration date is required")
+    @NotBlank(message = "Please provide or correct the vaccination date.")
     @JsonProperty("occurrenceDateTime")
     private String occurrenceDateTime;
 

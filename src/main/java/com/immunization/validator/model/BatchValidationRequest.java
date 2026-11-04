@@ -23,7 +23,7 @@ public class BatchValidationRequest {
     /**
      * State code to validate against
      */
-    @NotBlank(message = "State code is required")
+    @NotBlank(message = "Please select a state.")
     @JsonProperty("state")
     private String state;
     
@@ -42,15 +42,15 @@ public class BatchValidationRequest {
     /**
      * Response mode: "simple" or "detailed"
      */
-    @NotBlank(message = "Response mode is required")
+    @NotBlank(message = "Response mode is required.")
     @JsonProperty("responseMode")
     private String responseMode;
     
     /**
      * List of patients to validate
      */
-    @NotNull(message = "Patients list is required")
-    @Size(min = 1, message = "At least one patient is required")
+    @NotNull(message = "At least one patient record is required.")
+    @Size(min = 1, message = "At least one patient record is required.")
     @JsonProperty("patients")
     private List<Patient> patients;
 }

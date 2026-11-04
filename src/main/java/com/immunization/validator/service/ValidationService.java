@@ -1,5 +1,7 @@
 package com.immunization.validator.service;
 
+import com.immunization.validator.error.ClientText;
+import com.immunization.validator.error.ErrorMessages;
 import com.immunization.validator.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,12 @@ public class ValidationService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String VALIDATOR_VERSION = "3.1.0";
+    private static final int SUPPLIED_TEXT_MAX_CHARS = 40;
+
+    /** Earliest dose first, by the parsed date rather than the raw text. Undated doses go last. */
+    private static final Comparator<Immunization> BY_DOSE_DATE = Comparator.comparing(
+            (Immunization imm) -> ImmunizationDates.parse(imm.getOccurrenceDateTime()),
+            Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final RequirementsService requirementsService;
     private final DateConditionEvaluator dateConditionEvaluator;
@@ -85,8 +93,11 @@ public class ValidationService {
         List<ValidationRequirement> requirements;
         if (schoolYear != null) {
             requirements = requirementsService.getRequirements(stateCode, schoolYear);
-        } else {
+        } else if (effectiveAge != null) {
             requirements = requirementsService.getRequirements(stateCode, effectiveAge);
+        } else {
+            // No age, school year or usable birth date: age-based rules can't be looked up.
+            requirements = List.of();
         }
 
         if (requirements == null || requirements.isEmpty()) {
@@ -147,7 +158,7 @@ public class ValidationService {
 
         for (Immunization imm : immunizations) {
             // If vaccineCode is already set, keep it as-is
-            if (imm.getVaccineCode() != null && !imm.getVaccineCode().isEmpty()) {
+            if (imm.getVaccineCode() != null && !imm.getVaccineCode().isBlank()) {
                 translatedList.add(imm);
                 continue;
             }
@@ -183,6 +194,68 @@ public class ValidationService {
 
 
         return translatedList;
+    }
+
+    /**
+     * Sets aside records that can't be used, so they can't count as doses or crash the grouping below.
+     * An unreadable record could be the missing dose, so any set-aside record makes the overall
+     * result UNDETERMINED (see buildResponse). Usable records carry on exactly as before.
+     *
+     * This runs before CVX translation, because translation expands combo vaccines into several
+     * records and the position in the submitted list would be lost.
+     *
+     * @return the usable records, in their original order
+     */
+    private List<Immunization> setAsideUnusableRecords(List<Immunization> immunizations,
+                                                       InternalValidationResult result) {
+        List<Immunization> usable = new ArrayList<>();
+
+        for (int i = 0; i < immunizations.size(); i++) {
+            Immunization imm = immunizations.get(i);
+            String where = "immunization[" + i + "], ";
+
+            if (imm == null) {
+                setAside(result, null, ErrorMessages.UNKNOWN_VACCINE, where + "empty record");
+            } else if (!hasUsableVaccine(imm)) {
+                String supplied = imm.getCvxCode() != null ? "cvxCode " + imm.getCvxCode() : "no vaccine code";
+                setAside(result, null, ErrorMessages.UNKNOWN_VACCINE, where + supplied);
+            } else if (hasUnreadableDate(imm)) {
+                String supplied = ClientText.shorten(imm.getOccurrenceDateTime().trim(), SUPPLIED_TEXT_MAX_CHARS);
+                setAside(result, imm.getVaccineCode(), ErrorMessages.CORRECT_DATE,
+                        where + "occurrenceDateTime " + supplied);
+            } else {
+                usable.add(imm);
+            }
+        }
+
+        if (result.setAsideCount > 0) {
+            log.warn("Set aside {} immunization record(s) that could not be read", result.setAsideCount);
+        }
+        return usable;
+    }
+
+    private boolean hasUsableVaccine(Immunization imm) {
+        if (imm.getVaccineCode() != null && !imm.getVaccineCode().isBlank()) {
+            return true;
+        }
+        return imm.getCvxCode() != null && !vaccineLookupService.getVaccineGroupsForCvx(imm.getCvxCode()).isEmpty();
+    }
+
+    /** True for a date that is present but not readable. A missing date is rejected before this, by @NotBlank. */
+    private boolean hasUnreadableDate(Immunization imm) {
+        String date = imm.getOccurrenceDateTime();
+        return date != null && !date.isBlank() && ImmunizationDates.parse(date) == null;
+    }
+
+    private void setAside(InternalValidationResult result, String vaccineCode, String message, String details) {
+        result.setAsideCount++;
+        // Warnings are plain strings and also appear in simple mode, so each one names its record.
+        result.warnings.add(message + " [" + details + "]");
+        result.undeterminedConditions.add(UndeterminedCondition.builder()
+                .vaccineCode(vaccineCode)
+                .reason(message)
+                .details(details)
+                .build());
     }
 
     /**
@@ -246,6 +319,7 @@ public class ValidationService {
         int satisfiedCount = 0;
         int unsatisfiedCount = 0;
         int undeterminedCount = 0;
+        int setAsideCount = 0;
 
         // Enhanced tracking for alternate requirements
         int alternateAttemptedCount = 0;
@@ -277,6 +351,9 @@ public class ValidationService {
             patientImmunizations = List.of();
         }
 
+        // Records with no usable vaccine or an unreadable date never reach the rules below
+        patientImmunizations = setAsideUnusableRecords(patientImmunizations, result);
+
         // ✅ ADDED: Translate CVX codes to vaccine group names
         patientImmunizations = translateCvxCodes(patientImmunizations);
 
@@ -297,7 +374,12 @@ public class ValidationService {
         // Build map of exceptions by vaccine code
         Map<String, String> exceptionsByVaccine = new HashMap<>();
         if (patient.getExceptions() != null) {
-            for (VaccineException exception : patient.getExceptions()) {
+            for (int i = 0; i < patient.getExceptions().size(); i++) {
+                VaccineException exception = patient.getExceptions().get(i);
+                if (exception == null || exception.getVaccineCode() == null || exception.getVaccineCode().isBlank()) {
+                    result.warnings.add(ErrorMessages.EXCEPTION_IGNORED + " [exceptions[" + i + "]]");
+                    continue;
+                }
                 exceptionsByVaccine.put(exception.getVaccineCode(), exception.getExceptionType());
             }
         }
@@ -367,7 +449,7 @@ public class ValidationService {
                         List<Immunization> vaccineImmunizations = immunizationsByVaccine
                                 .getOrDefault(altVaccineCode, new ArrayList<>())
                                 .stream()
-                                .sorted(Comparator.comparing(Immunization::getOccurrenceDateTime))
+                                .sorted(BY_DOSE_DATE)
                                 .collect(Collectors.toList());
 
                         // Evaluate date-based condition if present
@@ -463,7 +545,7 @@ public class ValidationService {
             List<Immunization> vaccineImmunizations = immunizationsByVaccine
                     .getOrDefault(vaccineCode, new ArrayList<>())
                     .stream()
-                    .sorted(Comparator.comparing(Immunization::getOccurrenceDateTime))
+                    .sorted(BY_DOSE_DATE)
                     .collect(Collectors.toList());
 
             // Check dose count
@@ -602,7 +684,12 @@ public class ValidationService {
         ComplianceStatus status;
         String message;
 
-        if (result.undeterminedCount > 0) {
+        if (result.setAsideCount > 0) {
+            // An unreadable record could be the missing dose, so no firm answer is possible
+            status = ComplianceStatus.UNDETERMINED;
+            message = String.format("Cannot determine compliance: %d record(s) could not be read",
+                    result.setAsideCount);
+        } else if (result.undeterminedCount > 0) {
             // If ANY requirement is undetermined, overall status is UNDETERMINED
             status = ComplianceStatus.UNDETERMINED;
             message = String.format("Cannot determine compliance: %d requirement(s) could not be evaluated",
