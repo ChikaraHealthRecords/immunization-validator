@@ -243,10 +243,20 @@ class ApiErrorContractTest {
     }
 
     @Test
-    @DisplayName("Row 8: state matching is exact, so lowercase ma is unsupported")
-    void row8_lowercaseStateIsUnsupported() throws Exception {
-        assertError(postPatient("ma"), 400, "UNSUPPORTED_STATE", "state", STATE_NOT_SUPPORTED)
-                .andExpect(jsonPath("$.rejectedValue").value("ma"));
+    @DisplayName("Row 8: state matching ignores case and surrounding spaces")
+    void row8_stateIgnoresCase() throws Exception {
+        postPatient("ma").andExpect(status().isOk())
+                .andExpect(jsonPath("$.metadata.state").value("MA"));
+        postPatient(" Ma ").andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Row 8: /batch state matching ignores case")
+    void row8_stateIgnoresCase_batch() throws Exception {
+        postJson(BATCH, "{\"state\":\"ma\",\"schoolYear\":\"K-6\",\"responseMode\":\"simple\",\"patients\":["
+                + PATIENT + "]}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.results[0].metadata.state").value("MA"));
     }
 
     @Test

@@ -65,7 +65,7 @@ Browser code can't currently read this header on cross-origin calls, because it 
 
 **Only `MA` has rules today, so every other state returns 400 `UNSUPPORTED_STATE`.**
 
-Matching is exact: `ma` and `Ma` are unsupported too, so send the code in uppercase.
+Matching ignores case and surrounding spaces, so `ma` and ` Ma ` are the same as `MA`. Responses always use the uppercase code.
 
 A supported state with no rules for the given school year or age is different. It still returns 200 `undetermined` with the reason "No requirements found".
 
@@ -229,10 +229,12 @@ Errors raised before a request reaches the application, such as an invalid URL r
 
 These are clinical results, not errors: the response is a 200 with `status: "undetermined"`.
 
+Only doses of vaccines that the selected state's requirements use are checked. Flu, COVID-19 and every other vaccine no requirement uses are ignored, even with a missing or unreadable date, and so is CVX 998 ("no vaccine administered").
+
 A record is set aside when it has:
 
-- no usable vaccine: neither a `vaccineCode` nor a `cvxCode` that resolves to a vaccine group
-- a date that is present but can't be read, such as `03/01/2019`
+- no usable vaccine: neither a `vaccineCode` nor a `cvxCode` that resolves to a vaccine group (it could be a required vaccine)
+- a required vaccine with a date that is missing, blank, or can't be read, such as `03/01/2019`
 - nothing at all (`null` in the `immunization` list)
 
 Each one adds a warning that starts with the customer message and ends with the record it refers to. The usable records are still evaluated and counted in `metadata`.
@@ -260,6 +262,7 @@ curl -X POST "$BASE/single?state=MA&schoolYear=K-6" -H "Content-Type: applicatio
 | No vaccine code | We couldn't identify one of the vaccines. Please check the vaccine information. [immunization[0], no vaccine code] |
 | `null` record | We couldn't identify one of the vaccines. Please check the vaccine information. [immunization[0], empty record] |
 | Unreadable date | Please provide or correct the vaccination date. [immunization[0], occurrenceDateTime 03/01/2019] |
+| Missing or blank date | Please provide or correct the vaccination date. [immunization[0], no occurrenceDateTime] |
 
 The text after the first sentence comes from the client, cut to 40 characters, so escape it before displaying it. In detailed mode, `undeterminedConditions` also has one entry per record, with the sentence in `reason` and the bracketed part in `details`.
 
@@ -270,20 +273,6 @@ A `null` entry in `exceptions`, or one with no `vaccineCode`, is ignored with a 
 ```
 We couldn't read one of the vaccine exceptions, so it was ignored. [exceptions[0]]
 ```
-
-### Missing vaccination date
-
-A missing or blank date is an error rather than a clinical result:
-
-```bash
-curl -X POST "$BASE/single?state=MA&schoolYear=K-6" -H "Content-Type: application/json" \
-  -d '{"id":"test-patient-001","immunization":[{"vaccineCode":"DTaP","occurrenceDateTime":"2019-03-01"},{"vaccineCode":"DTaP"}]}'
-```
-```json
-{"httpStatus":400,"errorCode":"VALIDATION_FAILED","field":"immunization[1].occurrenceDateTime","message":"Please provide or correct the vaccination date.","requestId":"..."}
-```
-
-If several dates are missing, `details` lists them all.
 
 ## Batch validation
 
@@ -310,7 +299,7 @@ Results stay in the order they were sent. A failed record has `error` and no `st
 
 | Item `errorCode` | When | Item message |
 |---|---|---|
-| `VALIDATION_FAILED` | Blank or missing id, a missing date, or a `null` patient | The field's message, such as "Patient identifier is required." Only the first failing field is reported. |
+| `VALIDATION_FAILED` | Blank or missing id, or a `null` patient | The field's message, such as "Patient identifier is required." Only the first failing field is reported. |
 | `RECORD_PROCESSING_FAILED` | The record crashed processing | This record could not be processed. Please review it. |
 
 ## What these changes replaced

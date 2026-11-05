@@ -158,43 +158,76 @@ class BadRecordsAndBatchTest {
     }
 
     @Test
-    @DisplayName("Row 6: a missing date on /single is a 400 naming the JSON field")
+    @DisplayName("Row 6: a missing date on a required vaccine sets the record aside, like an unreadable one")
     void row6_missingDate() throws Exception {
-        String records = dose("DTaP", "2019-03-01") + ",{\"vaccineCode\":\"MMR\"}";
-        postSingle(patient("test-patient-306", records), "simple")
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.field").value("immunization[1].occurrenceDateTime"))
-                .andExpect(jsonPath("$.message").value(CORRECT_DATE))
-                .andExpect(jsonPath("$.status").doesNotExist());
+        String records = VALID_K6 + ",{\"vaccineCode\":\"MMR\"}";
+        ResultActions result = postSingle(patient("test-patient-306", records), "simple");
+        assertSetAside(result, 1);
+        result.andExpect(jsonPath("$.warnings[0]").value(
+                CORRECT_DATE + " [immunization[16], no occurrenceDateTime]"));
     }
 
     @Test
-    @DisplayName("Row 6: a blank date on /single is a 400")
+    @DisplayName("Row 6: a blank date is treated as missing")
     void row6_blankDate() throws Exception {
-        postSingle(patient("test-patient-307", dose("DTaP", "   ")), "simple")
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.field").value("immunization[0].occurrenceDateTime"));
+        ResultActions result = postSingle(patient("test-patient-307", dose("DTaP", "   ")), "simple");
+        assertSetAside(result, 1);
+        result.andExpect(jsonPath("$.warnings[0]").value(
+                CORRECT_DATE + " [immunization[0], no occurrenceDateTime]"));
     }
 
     @Test
-    @DisplayName("Row 6: two doses of one vaccine, one undated, is a 400 and never a 500")
+    @DisplayName("Row 6: two doses of one vaccine, one undated, is never a 500")
     void row6_datedAndUndatedDose() throws Exception {
         String records = dose("DTaP", "2019-03-01") + ",{\"vaccineCode\":\"DTaP\"}";
-        postSingle(patient("test-patient-308", records), "simple")
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.field").value("immunization[1].occurrenceDateTime"));
+        assertSetAside(postSingle(patient("test-patient-308", records), "simple"), 1);
     }
 
     @Test
-    @DisplayName("Row 6: several missing dates are all listed")
+    @DisplayName("Row 6: several missing dates each get a warning")
     void row6_severalMissingDates() throws Exception {
         String records = "{\"vaccineCode\":\"DTaP\"},{\"vaccineCode\":\"MMR\"}";
-        postSingle(patient("test-patient-309", records), "simple")
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details.length()").value(2))
-                .andExpect(jsonPath("$.details[0].field").value("immunization[0].occurrenceDateTime"))
-                .andExpect(jsonPath("$.details[1].field").value("immunization[1].occurrenceDateTime"));
+        ResultActions result = postSingle(patient("test-patient-309", records), "simple");
+        assertSetAside(result, 2);
+        result.andExpect(jsonPath("$.warnings[0]").value(CORRECT_DATE + " [immunization[0], no occurrenceDateTime]"))
+                .andExpect(jsonPath("$.warnings[1]").value(CORRECT_DATE + " [immunization[1], no occurrenceDateTime]"));
+    }
+
+    @Test
+    @DisplayName("Row 6: a combination vaccine with a bad date is set aside once, naming its required parts")
+    void row6_comboVaccineBadDate() throws Exception {
+        // CVX 110: DTaP-HepB-IPV
+        postSingle(patient("test-patient-310", "{\"cvxCode\":110,\"occurrenceDateTime\":\"03/01/2019\"}"), "detailed")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("undetermined"))
+                .andExpect(jsonPath("$.warnings.length()").value(1))
+                .andExpect(jsonPath("$.undeterminedConditions[0].vaccineCode").value("DTaP, HepB, Polio"));
+    }
+
+    // ─── Vaccines that count toward no requirement ───────────────────────────
+
+    @Test
+    @DisplayName("Flu and COVID-19 doses don't change the result, even with bad or missing dates")
+    void notRequired_badDatesIgnored() throws Exception {
+        String records = VALID_K6
+                + ",{\"cvxCode\":150,\"occurrenceDateTime\":\"2023-10-01\"}"   // flu, good date
+                + ",{\"cvxCode\":150,\"occurrenceDateTime\":\"10/01/2024\"}"   // flu, unreadable date
+                + ",{\"cvxCode\":208}"                                         // COVID-19, no date
+                + ",{\"vaccineCode\":\"FLU\",\"occurrenceDateTime\":\"   \"}";  // flu by name, blank date
+        postSingle(patient("test-patient-311", records), "simple")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("valid"))
+                .andExpect(jsonPath("$.warnings").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("CVX 998 (no vaccine administered) is not a dose and doesn't change the result")
+    void notRequired_noVaccineAdministered() throws Exception {
+        String records = VALID_K6 + ",{\"cvxCode\":998},{\"cvxCode\":998,\"occurrenceDateTime\":\"2020-01-01\"}";
+        postSingle(patient("test-patient-312", records), "simple")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("valid"))
+                .andExpect(jsonPath("$.warnings").doesNotExist());
     }
 
     // ─── Overall result ───────────────────────────────────────────────────────
@@ -359,15 +392,15 @@ class BadRecordsAndBatchTest {
     }
 
     @Test
-    @DisplayName("Row 9: a missing date fails only that patient, naming the JSON field")
-    void row9_missingDateFailsOnlyThatPatient() throws Exception {
+    @DisplayName("Row 9: a missing date makes only that patient undetermined")
+    void row9_missingDateAffectsOnlyThatPatient() throws Exception {
         postBatch(patient("batch-no-date", "{\"vaccineCode\":\"DTaP\"}"), patient("batch-good-5", VALID_K6))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.failedCount").value(1))
+                .andExpect(jsonPath("$.failedCount").doesNotExist())
                 .andExpect(jsonPath("$.results[0].id").value("batch-no-date"))
-                .andExpect(jsonPath("$.results[0].error.errorCode").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.results[0].error.field").value("immunization[0].occurrenceDateTime"))
-                .andExpect(jsonPath("$.results[0].error.message").value(CORRECT_DATE))
+                .andExpect(jsonPath("$.results[0].status").value("undetermined"))
+                .andExpect(jsonPath("$.results[0].warnings[0]").value(
+                        CORRECT_DATE + " [immunization[0], no occurrenceDateTime]"))
                 .andExpect(jsonPath("$.results[1].status").value("valid"));
     }
 

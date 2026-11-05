@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * REST controller for immunization validation endpoints.
@@ -58,7 +59,7 @@ public class ValidationController {
         if (state.isBlank()) {
             throw new ApiRequestException(ErrorCode.MISSING_PARAMETER, "state", ErrorMessages.SELECT_STATE);
         }
-        requireSupportedState(state);
+        state = requireSupportedState(state);
 
         logRequest(request, patient.getId(), responseMode);
 
@@ -78,9 +79,9 @@ public class ValidationController {
             @Valid @RequestBody BatchValidationRequest batchRequest,
             HttpServletRequest request) {
 
-        requireSupportedState(batchRequest.getState());
+        batchRequest.setState(requireSupportedState(batchRequest.getState()));
 
-        String firstId =batchRequest.getPatients() != null && !batchRequest.getPatients().isEmpty()
+        String firstId = batchRequest.getPatients() != null && !batchRequest.getPatients().isEmpty()
                 && batchRequest.getPatients().get(0) != null
                 ? batchRequest.getPatients().get(0).getId() : "unknown";
 
@@ -170,14 +171,18 @@ public class ValidationController {
     // ─── Private helpers ──────────────────────────────────────────────────────
 
     /**
-     * Rejects a state with no rule file. The match is exact, so "ma" is not "MA".
+     * Rejects a state with no rule file. Case and surrounding spaces don't matter, so " ma" is "MA".
      * Runs before anything else logs the state, because the value comes straight from the client.
+     *
+     * @return the state code as the rule files spell it
      */
-    private void requireSupportedState(String state) {
-        if (!requirementsService.hasRequirements(state)) {
+    private String requireSupportedState(String state) {
+        String code = state.trim().toUpperCase(Locale.ROOT);
+        if (!requirementsService.hasRequirements(code)) {
             log.warn("Unsupported state rejected: {}", safeForLog(state));
             throw new ApiRequestException(ErrorCode.UNSUPPORTED_STATE, "state", ErrorMessages.UNSUPPORTED_STATE, state);
         }
+        return code;
     }
 
     /** Keeps a client-supplied value from forging log lines: no line breaks or odd characters, short. */

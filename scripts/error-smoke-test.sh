@@ -133,7 +133,7 @@ check "Row 5: text/plain body" 415 UNSUPPORTED_MEDIA_TYPE \
     -X POST "$SINGLE?state=MA" -H "Content-Type: text/plain" -d "$PATIENT"
 check "Row 8: /single, unsupported state" 400 UNSUPPORTED_STATE \
     -X POST "$SINGLE?state=ZZ&schoolYear=K-6" -H "$JSON" -d "$PATIENT"
-check "Row 8: /single, lowercase ma" 400 UNSUPPORTED_STATE \
+check "Row 8: /single, lowercase ma is accepted" 200 - \
     -X POST "$SINGLE?state=ma&schoolYear=K-6" -H "$JSON" -d "$PATIENT"
 check "Row 8: /batch, unsupported state" 400 UNSUPPORTED_STATE \
     -X POST "$BATCH" -H "$JSON" -d "{\"state\":\"ZZ\",\"responseMode\":\"simple\",\"patients\":[$PATIENT]}"
@@ -195,11 +195,13 @@ check_body "Row 6: unreadable date" 200 "warning, undetermined" \
 check_body "Row 6: unreadable date on a complete record" 200 "1 record not read" \
     'Cannot determine compliance: 1 record\(s\) could not be read' \
     -X POST "$K6" -H "$JSON" -d "$(record smoke-date2 "$VALID_K6,$(dose HepB bad-date)")"
-check "Row 6: missing date" 400 VALIDATION_FAILED \
-    -X POST "$K6" -H "$JSON" -d "$(record smoke-nodate '{"vaccineCode":"DTaP"}')"
-check_body "Row 6: missing date names the field" 400 "immunization[1] date" \
-    "\"field\":\"immunization\[1\]\.occurrenceDateTime\",\"message\":\"$BAD_DATE\"" \
-    -X POST "$K6" -H "$JSON" -d "$(record smoke-nodate2 "$(dose DTaP 2019-03-01),{\"vaccineCode\":\"DTaP\"}")"
+check_body "Row 6: missing date on a required vaccine" 200 "warning, undetermined" \
+    "\"status\":\"undetermined\".*$BAD_DATE \[immunization\[1\], no occurrenceDateTime\]" \
+    -X POST "$K6" -H "$JSON" -d "$(record smoke-nodate "$(dose DTaP 2019-03-01),{\"vaccineCode\":\"DTaP\"}")"
+check_body "Not required: flu and COVID-19 with bad or no dates" 200 "still valid" '"status":"valid"' \
+    -X POST "$K6" -H "$JSON" -d "$(record smoke-flu "$VALID_K6,{\"cvxCode\":150,\"occurrenceDateTime\":\"10/01/2024\"},{\"cvxCode\":208}")"
+check_body "Not required: CVX 998, no vaccine administered" 200 "still valid" '"status":"valid"' \
+    -X POST "$K6" -H "$JSON" -d "$(record smoke-998 "$VALID_K6,{\"cvxCode\":998}")"
 check_body "Exceptions: null entry is ignored" 200 "warning, still valid" \
     '"status":"valid".*vaccine exceptions, so it was ignored\. \[exceptions\[0\]\]' \
     -X POST "$K6" -H "$JSON" -d "{\"id\":\"smoke-exc\",\"birthDate\":\"2019-01-01\",\"immunization\":[$VALID_K6],\"exceptions\":[null]}"

@@ -1,7 +1,6 @@
 package com.immunization.validator.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -58,8 +57,10 @@ public class Immunization {
     /**
      * Date when the immunization was administered
      * Format: YYYY-MM-DD
+     *
+     * Not required here: a dose that counts toward a requirement but has no readable date is
+     * set aside by ValidationService, and other vaccines don't need one.
      */
-    @NotBlank(message = "Please provide or correct the vaccination date.")
     @JsonProperty("occurrenceDateTime")
     private String occurrenceDateTime;
 
