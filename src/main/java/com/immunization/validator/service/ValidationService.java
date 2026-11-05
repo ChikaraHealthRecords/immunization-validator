@@ -1,5 +1,7 @@
 package com.immunization.validator.service;
 
+import com.immunization.validator.error.ClientText;
+import com.immunization.validator.error.ErrorMessages;
 import com.immunization.validator.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,15 @@ public class ValidationService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String VALIDATOR_VERSION = "3.1.0";
+    private static final int SUPPLIED_TEXT_MAX_CHARS = 40;
+
+    /** CVX 998, "no vaccine administered": records that a dose wasn't given. */
+    private static final Integer NO_VACCINE_ADMINISTERED_CVX = 998;
+
+    /** Earliest dose first, by the parsed date rather than the raw text. Undated doses go last. */
+    private static final Comparator<Immunization> BY_DOSE_DATE = Comparator.comparing(
+            (Immunization imm) -> ImmunizationDates.parse(imm.getOccurrenceDateTime()),
+            Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final RequirementsService requirementsService;
     private final DateConditionEvaluator dateConditionEvaluator;
@@ -85,8 +96,11 @@ public class ValidationService {
         List<ValidationRequirement> requirements;
         if (schoolYear != null) {
             requirements = requirementsService.getRequirements(stateCode, schoolYear);
-        } else {
+        } else if (effectiveAge != null) {
             requirements = requirementsService.getRequirements(stateCode, effectiveAge);
+        } else {
+            // No age, school year or usable birth date: age-based rules can't be looked up.
+            requirements = List.of();
         }
 
         if (requirements == null || requirements.isEmpty()) {
@@ -147,7 +161,7 @@ public class ValidationService {
 
         for (Immunization imm : immunizations) {
             // If vaccineCode is already set, keep it as-is
-            if (imm.getVaccineCode() != null && !imm.getVaccineCode().isEmpty()) {
+            if (imm.getVaccineCode() != null && !imm.getVaccineCode().isBlank()) {
                 translatedList.add(imm);
                 continue;
             }
@@ -158,7 +172,7 @@ public class ValidationService {
 
                 if (vaccineGroups.isEmpty()) {
                     log.warn("No vaccine groups found for CVX code: {}", imm.getCvxCode());
-                    // Keep original immunization with null vaccineCode (will fail validation)
+                    // Keep original immunization with null vaccineCode (countedDoses sets it aside)
                     translatedList.add(imm);
                 } else {
                     // Expand into multiple immunizations (for combo vaccines)
@@ -186,33 +200,103 @@ public class ValidationService {
     }
 
     /**
-     * Removes doses with no vaccine code after CVX translation, adding a
-     * warning for each so the person knows they weren't counted.
+     * Translates each submitted record and keeps only the doses that count toward one of the
+     * requirements being checked. Flu, COVID-19 and the other vaccines no requirement uses are
+     * dropped whatever their dates, so they can't change the result.
+     *
+     * A record is set aside when it could be a dose that counts but can't be used: an empty
+     * entry, a vaccine that can't be identified, or a counted vaccine with a missing or
+     * unreadable date. An unusable record could be the missing dose, so any set-aside record
+     * makes the overall result UNDETERMINED (see buildResponse).
+     *
+     * Works one record at a time, because translation expands combo vaccines into several
+     * doses and each warning names the record's position in the submitted list.
+     *
+     * @return the counted doses, translated to rule vaccine codes, in their original order
      */
-    private List<Immunization> withoutUnidentifiedDoses(List<Immunization> immunizations,
-                                                        InternalValidationResult result) {
-        List<Immunization> identified = new ArrayList<>();
-        Set<Integer> unknownCvx = new TreeSet<>();
-        int withoutAnyCode = 0;
-        for (Immunization imm : immunizations) {
-            if (imm.getVaccineCode() != null && !imm.getVaccineCode().isBlank()) {
-                identified.add(imm);
-            } else if (imm.getCvxCode() != null) {
-                unknownCvx.add(imm.getCvxCode());
-            } else {
-                withoutAnyCode++;
+    private List<Immunization> countedDoses(List<Immunization> immunizations,
+                                            Set<String> requiredVaccineCodes,
+                                            InternalValidationResult result) {
+        List<Immunization> counted = new ArrayList<>();
+
+        for (int i = 0; i < immunizations.size(); i++) {
+            Immunization imm = immunizations.get(i);
+            String where = "immunization[" + i + "], ";
+
+            if (imm == null) {
+                setAside(result, null, ErrorMessages.UNKNOWN_VACCINE, where + "empty record");
+                continue;
+            }
+            if (!hasVaccineCode(imm) && NO_VACCINE_ADMINISTERED_CVX.equals(imm.getCvxCode())) {
+                continue; // records that no vaccine was given, so it isn't a dose
+            }
+
+            List<Immunization> doses = translateCvxCodes(List.of(imm)).stream()
+                    .filter(this::hasVaccineCode)
+                    .toList();
+            if (doses.isEmpty()) {
+                String supplied = imm.getCvxCode() != null ? "cvxCode " + imm.getCvxCode() : "no vaccine code";
+                setAside(result, null, ErrorMessages.UNKNOWN_VACCINE, where + supplied);
+                continue;
+            }
+
+            List<Immunization> required = doses.stream()
+                    .filter(dose -> requiredVaccineCodes.contains(dose.getVaccineCode()))
+                    .toList();
+            if (required.isEmpty()) {
+                continue; // counts toward none of these requirements, so its date doesn't matter
+            }
+
+            if (ImmunizationDates.parse(imm.getOccurrenceDateTime()) == null) {
+                String date = imm.getOccurrenceDateTime();
+                String supplied = date == null || date.isBlank()
+                        ? "no occurrenceDateTime"
+                        : "occurrenceDateTime " + ClientText.shorten(date.trim(), SUPPLIED_TEXT_MAX_CHARS);
+                String vaccineCodes = required.stream()
+                        .map(Immunization::getVaccineCode)
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+                setAside(result, vaccineCodes, ErrorMessages.CORRECT_DATE, where + supplied);
+                continue;
+            }
+            counted.addAll(required);
+        }
+
+        if (result.setAsideCount > 0) {
+            log.warn("Set aside {} immunization record(s) that could not be read", result.setAsideCount);
+        }
+        return counted;
+    }
+
+    /** The vaccine codes the requirements look at, including those of their alternates. */
+    private Set<String> requiredVaccineCodes(List<ValidationRequirement> requirements) {
+        Set<String> codes = new HashSet<>();
+        for (ValidationRequirement requirement : requirements) {
+            codes.add(requirement.getVaccineCode());
+            if (requirement.getAlternateRequirements() != null) {
+                for (AlternateRequirement alternate : requirement.getAlternateRequirements()) {
+                    if (alternate.getAlternateVaccineCode() != null) {
+                        codes.add(alternate.getAlternateVaccineCode());
+                    }
+                }
             }
         }
-        for (Integer cvx : unknownCvx) {
-            result.warnings.add(String.format(
-                    "CVX code %d isn't in the vaccine list, so doses with that code weren't counted.", cvx));
-        }
-        if (withoutAnyCode > 0) {
-            result.warnings.add(String.format(
-                    "%d dose%s had no vaccine code or CVX code and %s counted.",
-                    withoutAnyCode, withoutAnyCode == 1 ? "" : "s", withoutAnyCode == 1 ? "wasn't" : "weren't"));
-        }
-        return identified;
+        return codes;
+    }
+
+    private boolean hasVaccineCode(Immunization imm) {
+        return imm.getVaccineCode() != null && !imm.getVaccineCode().isBlank();
+    }
+
+    private void setAside(InternalValidationResult result, String vaccineCode, String message, String details) {
+        result.setAsideCount++;
+        // Warnings are plain strings and also appear in simple mode, so each one names its record.
+        result.warnings.add(message + " [" + details + "]");
+        result.undeterminedConditions.add(UndeterminedCondition.builder()
+                .vaccineCode(vaccineCode)
+                .reason(message)
+                .details(details)
+                .build());
     }
 
     /**
@@ -291,6 +375,7 @@ public class ValidationService {
         int satisfiedCount = 0;
         int unsatisfiedCount = 0;
         int undeterminedCount = 0;
+        int setAsideCount = 0;
 
         // Enhanced tracking for alternate requirements
         int alternateAttemptedCount = 0;
@@ -368,16 +453,12 @@ public class ValidationService {
             patientImmunizations = List.of();
         }
 
-        // ✅ ADDED: Translate CVX codes to vaccine group names
-        patientImmunizations = translateCvxCodes(patientImmunizations);
+        // Translate CVX codes and keep only doses these requirements use. Unusable records
+        // that could count are set aside, and make the result UNDETERMINED.
+        patientImmunizations = countedDoses(patientImmunizations, requiredVaccineCodes(requirements), result);
 
         // De-duplicate: same vaccineCode + date = one dose, prefer the record with a lot number
         patientImmunizations = deduplicateImmunizations(patientImmunizations);
-
-        // Doses we couldn't identify (a CVX code that isn't in the vaccine list, or
-        // no code at all) can't count toward anything. Say so, and leave them out
-        // rather than failing the whole record.
-        patientImmunizations = withoutUnidentifiedDoses(patientImmunizations, result);
 
         // Group full immunization objects for dose counts and date/interval condition checking
         Map<String, List<Immunization>> immunizationsByVaccine = patientImmunizations.stream()
@@ -386,7 +467,12 @@ public class ValidationService {
         // Build map of exceptions by vaccine code
         Map<String, String> exceptionsByVaccine = new HashMap<>();
         if (patient.getExceptions() != null) {
-            for (VaccineException exception : patient.getExceptions()) {
+            for (int i = 0; i < patient.getExceptions().size(); i++) {
+                VaccineException exception = patient.getExceptions().get(i);
+                if (exception == null || exception.getVaccineCode() == null || exception.getVaccineCode().isBlank()) {
+                    result.warnings.add(ErrorMessages.EXCEPTION_IGNORED + " [exceptions[" + i + "]]");
+                    continue;
+                }
                 exceptionsByVaccine.put(exception.getVaccineCode(), exception.getExceptionType());
             }
         }
@@ -529,7 +615,7 @@ public class ValidationService {
                     List<Immunization> vaccineImmunizations = immunizationsByVaccine
                             .getOrDefault(altVaccineCode, new ArrayList<>())
                             .stream()
-                            .sorted(Comparator.comparing(Immunization::getOccurrenceDateTime))
+                            .sorted(BY_DOSE_DATE)
                             .collect(Collectors.toList());
 
                     // Evaluate date-based condition if present
@@ -622,7 +708,7 @@ public class ValidationService {
         List<Immunization> vaccineImmunizations = immunizationsByVaccine
                 .getOrDefault(vaccineCode, new ArrayList<>())
                 .stream()
-                .sorted(Comparator.comparing(Immunization::getOccurrenceDateTime))
+                .sorted(BY_DOSE_DATE)
                 .collect(Collectors.toList());
 
         // Check dose count
@@ -746,7 +832,12 @@ public class ValidationService {
         ComplianceStatus status;
         String message;
 
-        if (result.undeterminedCount > 0) {
+        if (result.setAsideCount > 0) {
+            // An unreadable record could be the missing dose, so no firm answer is possible
+            status = ComplianceStatus.UNDETERMINED;
+            message = String.format("Cannot determine compliance: %d record(s) could not be read",
+                    result.setAsideCount);
+        } else if (result.undeterminedCount > 0) {
             // If ANY requirement is undetermined, overall status is UNDETERMINED
             status = ComplianceStatus.UNDETERMINED;
             message = String.format("Cannot determine compliance: %d requirement(s) could not be evaluated",

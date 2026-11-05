@@ -216,15 +216,15 @@ class CvxGroupRulesTest {
     // ─── CVX codes missing from the vaccine list ─────────────────────────────
 
     @Test
-    @DisplayName("An unknown CVX code is skipped with a warning instead of failing the whole record")
+    @DisplayName("An unknown CVX code needs review, with a warning, instead of failing the whole record")
     void unknownCvxCode() {
         ValidationResponse r = validate(patient("2019-03-14", List.of(
-                cvx(337, "2025-10-01"),               // a newer flu code not in our list
+                cvx(337, "2025-10-01"),               // a code not in our list: it could be a required vaccine
                 named("MMR", "2020-03-16"),
                 named("MMR", "2023-04-10"))), "K-6");
 
-        assertNotNull(r.getStatus());
-        assertTrue(warnings(r).stream().anyMatch(w -> w.contains("CVX code 337")), warnings(r).toString());
+        assertEquals(ComplianceStatus.UNDETERMINED, r.getStatus());
+        assertTrue(warnings(r).stream().anyMatch(w -> w.contains("cvxCode 337")), warnings(r).toString());
         assertTrue(unmet(r, "MMR").isEmpty(), "the rest of the record is still checked");
     }
 }

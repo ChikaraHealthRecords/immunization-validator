@@ -1,6 +1,7 @@
 package com.immunization.validator.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,7 @@ public class Patient {
     /**
      * Patient identifier (non-PII identifier used for tracking)
      */
-    @NotBlank(message = "Patient identifier is required")
+    @NotBlank(message = "Patient identifier is required.")
     @JsonProperty("id")
     private String id;
     
@@ -45,6 +46,7 @@ public class Patient {
     /**
      * List of immunizations received by the patient
      */
+    @Valid
     @JsonProperty("immunization")
     private List<Immunization> immunizations;
     

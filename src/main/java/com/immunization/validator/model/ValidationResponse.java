@@ -2,6 +2,7 @@ package com.immunization.validator.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.immunization.validator.error.ApiError;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -53,6 +54,9 @@ public class ValidationResponse {
 
     /** Validation metadata */
     private ValidationMetadata metadata;
+
+    /** Why this record failed, on a batch item only. A failed item has no status or valid. */
+    private ApiError.FieldProblem error;
 
     /**
      * Sets status and populates the deprecated {@code valid} field
