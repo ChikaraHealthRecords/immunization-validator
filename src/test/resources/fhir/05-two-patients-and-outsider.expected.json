@@ -1,0 +1,49 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "patient-A",
+        "birthDate": "2019-04-15",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2020-06-10"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 1,
+        "mapped": 1,
+        "excluded": [],
+        "warnings": []
+      }
+    },
+    {
+      "chikara": {
+        "id": "patient-B",
+        "birthDate": "2012-09-01",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 115,
+            "occurrenceDateTime": "2023-09-15"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 1,
+        "mapped": 1,
+        "excluded": [],
+        "warnings": []
+      }
+    }
+  ],
+  "unattributed": [
+    {
+      "resourceId": "imm-x1",
+      "reason": "REFERS_TO_OTHER_PATIENT"
+    }
+  ],
+  "ignored": {}
+}

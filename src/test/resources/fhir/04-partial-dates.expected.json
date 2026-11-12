@@ -1,0 +1,52 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "patient-004",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2020-06"
+          },
+          {
+            "cvxCode": 10,
+            "occurrenceDateTime": "2020"
+          },
+          {
+            "cvxCode": 3
+          },
+          {
+            "cvxCode": 21,
+            "occurrenceDateTime": "2020-06-10"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 4,
+        "mapped": 4,
+        "excluded": [],
+        "warnings": [
+          {
+            "code": "PARTIAL_DATE_NOT_PADDED",
+            "resourceId": "imm-p1"
+          },
+          {
+            "code": "PARTIAL_DATE_NOT_PADDED",
+            "resourceId": "imm-p2"
+          },
+          {
+            "code": "DATE_NOT_STRUCTURED",
+            "resourceId": "imm-p3"
+          },
+          {
+            "code": "BIRTHDATE_PARTIAL",
+            "resourceId": "patient-004"
+          }
+        ]
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {}
+}

@@ -1,0 +1,25 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-1",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/nobody"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "20"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    }
+  ]
+}

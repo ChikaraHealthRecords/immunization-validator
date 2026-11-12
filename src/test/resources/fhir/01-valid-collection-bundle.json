@@ -1,0 +1,102 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-001",
+        "birthDate": "2019-04-15",
+        "name": [
+          {
+            "family": "Testcase",
+            "given": [
+              "Alex"
+            ]
+          }
+        ],
+        "address": [
+          {
+            "line": [
+              "1 Example Street"
+            ],
+            "city": "Testville"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "555-0100"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-001",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-001"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "20"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10",
+        "lotNumber": "LOT-A1"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-002",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-001"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "00000-0000-00"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "10"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10T09:30:00-05:00"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-003",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-001"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "urn:oid:2.16.840.1.113883.12.292",
+              "code": "03"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-04-20",
+        "protocolApplied": [
+          {
+            "doseNumberPositiveInt": 1
+          }
+        ]
+      }
+    }
+  ]
+}

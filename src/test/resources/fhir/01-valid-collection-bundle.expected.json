@@ -1,0 +1,35 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "patient-001",
+        "birthDate": "2019-04-15",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2020-06-10",
+            "lotNumber": "LOT-A1"
+          },
+          {
+            "cvxCode": 10,
+            "occurrenceDateTime": "2020-06-10T09:30:00-05:00"
+          },
+          {
+            "cvxCode": 3,
+            "occurrenceDateTime": "2020-04-20",
+            "doseNumber": 1
+          }
+        ]
+      },
+      "mapping": {
+        "received": 3,
+        "mapped": 3,
+        "excluded": [],
+        "warnings": []
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {}
+}

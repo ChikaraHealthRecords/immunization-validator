@@ -1,0 +1,7 @@
+{
+  "error": {
+    "errorCode": "MALFORMED_REQUEST",
+    "field": null,
+    "reason": "NOT_JSON"
+  }
+}

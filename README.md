@@ -177,6 +177,17 @@ POST /api/v1/validate/batch
 }
 ```
 
+### FHIR R4 Validation
+
+```
+POST /api/v1/validate/fhir?state=MA&schoolYear=K-6
+```
+
+Accepts FHIR R4 immunization data as a Bundle, a JSON array of resources, NDJSON (bulk export) or
+one lone resource, with the same query parameters as `/single`. Each patient is translated into the
+model above and validated by the same engine; the response adds a `mapping` report saying which
+FHIR resources counted and why. See [docs/fhir-validation.md](docs/fhir-validation.md).
+
 ## Configuration
 
 ### State Requirements

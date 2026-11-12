@@ -1,0 +1,32 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-016",
+        "birthDate": "2019-02-30"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-1",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-016"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "20"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    }
+  ]
+}

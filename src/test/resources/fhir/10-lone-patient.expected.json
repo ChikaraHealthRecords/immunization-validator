@@ -1,0 +1,25 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "patient-010",
+        "birthDate": "2019-04-15",
+        "exceptions": [],
+        "immunization": []
+      },
+      "mapping": {
+        "received": 0,
+        "mapped": 0,
+        "excluded": [],
+        "warnings": [
+          {
+            "code": "NO_IMMUNIZATION_RESOURCES",
+            "resourceId": "patient-010"
+          }
+        ]
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {}
+}

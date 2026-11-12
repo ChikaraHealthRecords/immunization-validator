@@ -1,0 +1,7 @@
+{
+  "error": {
+    "errorCode": "VALIDATION_FAILED",
+    "field": "entry[1].resource.patient",
+    "reason": "NO_PATIENT_REFERENCE"
+  }
+}
