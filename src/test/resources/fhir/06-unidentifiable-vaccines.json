@@ -1,0 +1,104 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-006",
+        "birthDate": "2019-04-15"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-text",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-006"
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-ndc",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-006"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/ndc",
+              "code": "00000-0000-00"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-two",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-006"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "20"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "10"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-abc",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-006"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "abc"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-lead0",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-006"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "08"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    }
+  ]
+}

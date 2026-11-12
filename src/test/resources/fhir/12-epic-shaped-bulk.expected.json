@@ -1,0 +1,35 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "epic-style-001",
+        "birthDate": "2019-02-10",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2019-04-16"
+          },
+          {
+            "cvxCode": 141,
+            "occurrenceDateTime": "2019-04-16"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 2,
+        "mapped": 2,
+        "excluded": [],
+        "warnings": []
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {
+    "AllergyIntolerance": 1,
+    "Condition": 1,
+    "Observation": 1,
+    "Practitioner": 1,
+    "Organization": 1
+  }
+}

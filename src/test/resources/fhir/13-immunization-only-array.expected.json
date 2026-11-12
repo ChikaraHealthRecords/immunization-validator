@@ -1,0 +1,33 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "array-only-001",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2019-04-16"
+          },
+          {
+            "cvxCode": 10,
+            "occurrenceDateTime": "2019-04-16"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 2,
+        "mapped": 2,
+        "excluded": [],
+        "warnings": [
+          {
+            "code": "NO_PATIENT_RESOURCE",
+            "resourceId": "array-only-001"
+          }
+        ]
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {}
+}

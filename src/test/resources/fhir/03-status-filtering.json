@@ -1,0 +1,70 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "patient-003",
+        "birthDate": "2019-04-15"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-ok",
+        "status": "completed",
+        "patient": {
+          "reference": "Patient/patient-003"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "20"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-notdone",
+        "status": "not-done",
+        "patient": {
+          "reference": "Patient/patient-003"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "20"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-08-10"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-error",
+        "status": "entered-in-error",
+        "patient": {
+          "reference": "Patient/patient-003"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "10"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-08-10"
+      }
+    }
+  ]
+}

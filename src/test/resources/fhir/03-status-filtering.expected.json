@@ -1,0 +1,39 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "patient-003",
+        "birthDate": "2019-04-15",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2020-06-10"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 3,
+        "mapped": 1,
+        "excluded": [
+          {
+            "resourceId": "imm-notdone",
+            "reason": "STATUS_NOT_DONE"
+          },
+          {
+            "resourceId": "imm-error",
+            "reason": "STATUS_ENTERED_IN_ERROR"
+          }
+        ],
+        "warnings": [
+          {
+            "code": "NOT_DONE_NOT_COUNTED",
+            "resourceId": "imm-notdone"
+          }
+        ]
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {}
+}

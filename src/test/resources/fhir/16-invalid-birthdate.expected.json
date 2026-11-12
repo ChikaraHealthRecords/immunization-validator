@@ -1,0 +1,29 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "patient-016",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2020-06-10"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 1,
+        "mapped": 1,
+        "excluded": [],
+        "warnings": [
+          {
+            "code": "BIRTHDATE_INVALID",
+            "resourceId": "patient-016"
+          }
+        ]
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {}
+}

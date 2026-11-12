@@ -1,0 +1,8 @@
+{"resourceType": "Patient", "id": "epic-style-001", "active": true, "identifier": [{"system": "urn:oid:1.2.3.4.5.1", "value": "MRN-0001"}, {"system": "urn:oid:1.2.3.4.5.2", "value": "ALT-0001"}, {"system": "http://example.org/fhir-id", "value": "epic-style-001"}], "extension": [{"url": "http://example.org/ext", "valueString": "x"}], "name": [{"family": "Testcase", "given": ["Alex"]}], "gender": "unknown", "birthDate": "2019-02-10", "deceasedBoolean": false, "address": [{"line": ["1 Example Street"], "city": "Testville"}], "telecom": [{"system": "phone", "value": "555-0100"}]}
+{"resourceType": "Immunization", "id": "imm-e1", "identifier": [{"system": "urn:oid:1.2.3.4.5.9", "value": "I1"}], "status": "completed", "vaccineCode": {"coding": [{"system": "http://hl7.org/fhir/sid/cvx", "code": "20"}]}, "patient": {"reference": "Patient/epic-style-001"}, "occurrenceDateTime": "2019-04-16", "primarySource": true}
+{"resourceType": "Immunization", "id": "imm-e2", "identifier": [{"system": "urn:oid:1.2.3.4.5.9", "value": "I2"}], "status": "completed", "vaccineCode": {"coding": [{"system": "http://hl7.org/fhir/sid/cvx", "code": "141"}]}, "patient": {"reference": "Patient/epic-style-001"}, "occurrenceDateTime": "2019-04-16", "primarySource": true}
+{"resourceType": "AllergyIntolerance", "id": "al-1", "patient": {"reference": "Patient/epic-style-001"}, "code": {"text": "made-up allergy"}}
+{"resourceType": "Condition", "id": "c-1", "subject": {"reference": "Patient/epic-style-001"}}
+{"resourceType": "Observation", "id": "o-1", "status": "final"}
+{"resourceType": "Practitioner", "id": "pr-1"}
+{"resourceType": "Organization", "id": "org-1"}

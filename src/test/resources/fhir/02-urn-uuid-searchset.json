@@ -1,0 +1,52 @@
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "p-uuid",
+        "birthDate": "2019-04-15"
+      },
+      "fullUrl": "urn:uuid:11111111-2222-4333-8444-555555555555"
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-u1",
+        "status": "completed",
+        "patient": {
+          "reference": "urn:uuid:11111111-2222-4333-8444-555555555555"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "21"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-06-10"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Immunization",
+        "id": "imm-u2",
+        "status": "completed",
+        "patient": {
+          "reference": "http://example.org/fhir/Patient/p-uuid/_history/2"
+        },
+        "vaccineCode": {
+          "coding": [
+            {
+              "system": "http://hl7.org/fhir/sid/cvx",
+              "code": "20"
+            }
+          ]
+        },
+        "occurrenceDateTime": "2020-07-10"
+      }
+    }
+  ]
+}

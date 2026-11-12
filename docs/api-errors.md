@@ -59,7 +59,7 @@ Browser code can't currently read this header on cross-origin calls, because it 
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | The body isn't sent as JSON |
 | `REQUEST_NOT_SUPPORTED` | 4xx | Any other client error, such as a 406 |
 | `INTERNAL_ERROR` | 500 | Something failed on the server |
-| `RECORD_PROCESSING_FAILED` | 200 | Only inside a `/batch` result's `error`: that patient's record crashed processing. |
+| `RECORD_PROCESSING_FAILED` | 200 | Only inside a `/batch` or `/fhir` result's `error`: that patient's record crashed processing. |
 
 ## Supported states
 
@@ -301,6 +301,10 @@ Results stay in the order they were sent. A failed record has `error` and no `st
 |---|---|---|
 | `VALIDATION_FAILED` | Blank or missing id, or a `null` patient | The field's message, such as "Patient identifier is required." Only the first failing field is reported. |
 | `RECORD_PROCESSING_FAILED` | The record crashed processing | This record could not be processed. Please review it. |
+
+## FHIR validation
+
+`POST /api/v1/validate/fhir` uses the same error shape, codes and messages. FHIR input that can't be read is `MALFORMED_REQUEST`; FHIR input with no usable Patient or Immunization, or a dose with no patient reference, is `VALIDATION_FAILED` with `field` naming the entry. Patients are isolated as in `/batch`. See [fhir-validation.md](fhir-validation.md).
 
 ## What these changes replaced
 

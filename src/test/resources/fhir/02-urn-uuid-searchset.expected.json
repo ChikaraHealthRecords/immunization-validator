@@ -1,0 +1,29 @@
+{
+  "patients": [
+    {
+      "chikara": {
+        "id": "p-uuid",
+        "birthDate": "2019-04-15",
+        "exceptions": [],
+        "immunization": [
+          {
+            "cvxCode": 21,
+            "occurrenceDateTime": "2020-06-10"
+          },
+          {
+            "cvxCode": 20,
+            "occurrenceDateTime": "2020-07-10"
+          }
+        ]
+      },
+      "mapping": {
+        "received": 2,
+        "mapped": 2,
+        "excluded": [],
+        "warnings": []
+      }
+    }
+  ],
+  "unattributed": [],
+  "ignored": {}
+}
